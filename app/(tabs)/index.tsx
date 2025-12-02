@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 // Import les composants React Native
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Définir les couleurs
 const Colors = {
