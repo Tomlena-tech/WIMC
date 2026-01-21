@@ -1,16 +1,16 @@
 # W.I.M.C - Web Interface for Map Coordinates
 
-## 🎯 Description
+## Description
 Application de géolocalisation intelligente intégrant Claude AI via Model Context Protocol (MCP).
 
-## 🛠️ Stack Technique
+## Stack Technique
 - **Backend:** FastAPI (Python 3.13)
 - **Database:** PostgreSQL 16
 - **AI:** Claude AI via MCP
 - **Auth:** JWT + bcrypt
 - **Tests:** pytest
 
-## 📦 Installation
+## Installation
 
 ### Prérequis
 - Python 3.10+
@@ -51,19 +51,19 @@ docker run --name wimc-postgres \
 uvicorn app.main:app --reload
 ```
 
-API: http://localhost:8000  
+API: http://localhost:8000
 Docs: http://localhost:8000/docs
 
-## 🌿 Git Workflow
+## Git Workflow
 
 - `main` - Production
 - `develop` - Intégration
 - `feature/*` - Nouvelles fonctionnalités
 
-## 👨‍💻 Auteur
+## Auteur
 **Thomas** - Holberton School Bordeaux - Trimestre 3 - 2026
 
-## 🚀 Sprints
+## Sprints
 - Sprint 0: Setup (21-27 janv)
 - Sprint 1: Auth JWT (28 janv - 3 fév)
 - Sprint 2: CRUD Lieux (3-9 fév)
