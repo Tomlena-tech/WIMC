@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from app.core.database import get_db
 
 
 app = FastAPI(
@@ -19,3 +21,11 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+
+# next test "smoke test"
+@app.get("/users/count")
+def count_users(db: Session = Depends(get_db)):
+    from app.models.user import User
+    count = db.query(User).count()
+    return {"users_count": 0}
