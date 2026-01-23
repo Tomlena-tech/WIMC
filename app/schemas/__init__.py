@@ -18,7 +18,7 @@ class UserResponse(UserBase):
     created_at: datetime
 
 
-"""Traduce from Pydantic data into SQL to json"""
+"""Traduce (from Pydantic) data into SQL to json"""
 
 
 class Config:
