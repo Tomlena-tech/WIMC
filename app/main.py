@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.routes import auth
 
 
 app = FastAPI(
@@ -9,6 +10,7 @@ app = FastAPI(
     version="0.0.1"
 
 )
+app.include_router
 
 
 # starting point
