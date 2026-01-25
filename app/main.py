@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.routes import auth
+from app.routes.auth import router as auth_router
 
 
 app = FastAPI(
@@ -10,7 +10,12 @@ app = FastAPI(
     version="0.0.1"
 
 )
-app.include_router
+app.include_router(auth_router)
+
+
+@app.get("/ping")
+def ping():
+    return {"ping": "ok"}
 
 
 # starting point
