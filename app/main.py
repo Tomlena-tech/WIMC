@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.routes.auth import router as auth_router
+from app.core.dependencies import get_current_user
 
 
 app = FastAPI(
@@ -36,3 +37,14 @@ def count_users(db: Session = Depends(get_db)):
     from app.models.user import User
     count = db.query(User).count()
     return {"users_count": 0}
+
+# testing if road is protected or not
+
+
+@app.get("/users/me")
+def get_my_profile(current_user: dict = Depends(get_current_user)):
+    return {
+        "user_id": current_user["user_id"],
+        "email": current_user["email"],
+        "message": "This route is protected!"
+    }
