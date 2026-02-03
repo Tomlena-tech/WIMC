@@ -14,4 +14,4 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 # Relation avec Location
-    locations = relationship("Location", back_populates="owner")
+    children = relationship("Child", back_populates="parent", cascade="all, delete-orphan")
