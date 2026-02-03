@@ -1,21 +1,29 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 
 class LocationBase(BaseModel):
     name: str
     latitude: float
     longitude: float
-    description: str | None = None
+    description: Optional[str] = None
 
 
 class LocationCreate(LocationBase):
-    pass
+    child_id: int
+
+
+class LocationUpdate(BaseModel):
+    name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    description: Optional[str] = None
 
 
 class LocationResponse(LocationBase):
     id: int
-    user_id: int
+    child_id: int
     created_at: datetime
 
     class Config:
