@@ -1,5 +1,5 @@
 from app.models.user import User
-from .child import Child 
+from .child import Child
 from .location import Location
 
-__all__ = ["User", "Location", "Child"] 
+__all__ = ["User", "Location", "Child"]

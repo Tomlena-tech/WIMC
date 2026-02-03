@@ -23,10 +23,11 @@ def create_location(
         Child.id == location_data.child_id,
         Child.parent_id == current_user.id
     ).first()
-    
+
     if not child:
-        raise HTTPException(status_code=404, detail="Child not found or not yours")
-    
+        raise HTTPException(status_code=404,
+                            detail="Child not found or not yours")
+
     new_location = Location(
         name=location_data.name,
         latitude=location_data.latitude,
@@ -48,9 +49,10 @@ def get_my_locations(
     """Récupérer toutes les locations de tous les enfants du parent"""
     # Récupérer les IDs des enfants du parent
     child_ids = [child.id for child in current_user.children]
-    
+
     # Récupérer les locations de ces enfants
-    locations = db.query(Location).filter(Location.child_id.in_(child_ids)).all()
+    locations = db.query(Location).filter(Location.child_id.in_
+                                          (child_ids)).all()
     return locations
 
 
@@ -62,7 +64,7 @@ def get_location(
 ):
     """Récupérer une location spécifique"""
     child_ids = [child.id for child in current_user.children]
-    
+
     location = db.query(Location).filter(
         Location.id == location_id,
         Location.child_id.in_(child_ids)
@@ -82,7 +84,7 @@ def delete_location(
 ):
     """Supprimer une location"""
     child_ids = [child.id for child in current_user.children]
-    
+
     location = db.query(Location).filter(
         Location.id == location_id,
         Location.child_id.in_(child_ids)
