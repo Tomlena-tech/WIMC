@@ -3,9 +3,15 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from app.core.config import settings
 from fastapi import HTTPException, status
+from fastapi import Depends
+from fastapi.security import HTTPBearer
+from sqlalchemy.orm import Session
+from app.core.database import get_db
+from app.models.user import User
 
 """checking by himself if the hash is out of date"""
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
@@ -49,3 +55,22 @@ def verify_token(token: str) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
+
+
+def get_current_user(
+    credentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """Récupère l'utilisateur actuel depuis le token JWT"""
+    token = credentials.credentials
+    token_data = verify_token(token)
+
+    user = db.query(User).filter(User.id == token_data["user_id"]).first()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    return user
