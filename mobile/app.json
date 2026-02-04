@@ -20,7 +20,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyA7gc1IHKT5N6rPi7jNw1nW4yYxedLWLEU"
+          "apiKey": ""
         }
       }
     },
@@ -28,7 +28,7 @@
       "bundleIdentifier": "com.wimc.app",
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": "AIzaSyA7gc1IHKT5N6rPi7jNw1nW4yYxedLWLEU"
+        "googleMapsApiKey": ""
       }
     },
     "plugins": [
