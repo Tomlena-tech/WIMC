@@ -13,6 +13,7 @@ class Child(Base):
     birth_date = Column(Date, nullable=True)
     phone = Column(String(20), nullable=True)
     notes = Column(Text, nullable=True)
+    battery = Column(Integer, default=100)  
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relations

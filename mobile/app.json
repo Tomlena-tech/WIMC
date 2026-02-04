@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "WIMC",
+    "slug": "wimc",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "wimc",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4285F4"
+    },
+    "android": {
+      "package": "com.wimc.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#4285F4"
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA7gc1IHKT5N6rPi7jNw1nW4yYxedLWLEU"
+        }
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.wimc.app",
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyA7gc1IHKT5N6rPi7jNw1nW4yYxedLWLEU"
+      }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow WIMC to use your location."
+        }
+      ]
+    ]
+  }
+}

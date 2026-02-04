@@ -25,6 +25,8 @@ class ChildResponse(ChildBase):
     id: int
     parent_id: int
     created_at: datetime
+    battery: Optional[int] = 100
+
     
     class Config:
         from_attributes = True
