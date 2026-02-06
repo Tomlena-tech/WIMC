@@ -1,21 +1,49 @@
 import axios from 'axios';
+import { getAccessToken, refreshAccessToken, storeTokens } from './auth';
 
-const API_BASE_URL = 'http://10.5.1.110:8000';  // TODO: Replace with your local IP for testing
+const API_BASE_URL = 'http://192.168.1.30:8000';  // TODO: Mettre ton IP actuelle
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
+// ✅ Interceptor : Ajouter token automatiquement
+axios.interceptors.request.use(
+  async (config) => {
+    const token = await getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
-});
+  (error) => Promise.reject(error)
+);
+
+// ✅ Interceptor : Refresh automatique si 401
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      console.log('🔄 Token expired, refreshing...');
+      const newToken = await refreshAccessToken();
+      
+      if (newToken) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return axios(originalRequest);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // Types
 export interface Child {
   id: number;
   name: string;
-  birth_date: string | null;
-  phone: string | null;
-  notes: string | null;
+  birth_date: string;
+  phone: string;
+  notes: string;
   battery: number;
   parent_id: number;
   created_at: string;
@@ -26,44 +54,41 @@ export interface Location {
   name: string;
   latitude: number;
   longitude: number;
-  description: string | null;
+  description: string;
   child_id: number;
   created_at: string;
 }
 
-// Auth
+// ✅ Login avec stockage automatique
 export const login = async (email: string, password: string) => {
-  const response = await api.post(`/auth/login?email=${email}&password=${password}`);
-  return response.data;
-};
-
-// Children
-export const getChildren = async (token: string): Promise<Child[]> => {
-  const response = await api.get('/children/', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+    email,
+    password
   });
+  
+  const { access_token, refresh_token } = response.data;
+  await storeTokens(access_token, refresh_token);
+  
   return response.data;
 };
 
-export const getChild = async (childId: number, token: string): Promise<Child> => {
-  const response = await api.get(`/children/${childId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+// ✅ API calls (plus besoin de passer TOKEN)
+export const getChildren = async (): Promise<Child[]> => {
+  const response = await axios.get(`${API_BASE_URL}/children/`);
   return response.data;
 };
 
-// Locations
-export const getPlaces = async (token: string): Promise<Location[]> => {
-  const response = await api.get('/places/', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getChild = async (childId: number): Promise<Child> => {
+  const response = await axios.get(`${API_BASE_URL}/children/${childId}`);
   return response.data;
 };
 
-export default api;
+export const getPlaces = async (): Promise<Location[]> => {
+  const response = await axios.get(`${API_BASE_URL}/places/`);
+  return response.data;
+};
+
+export const getPlace = async (locationId: number): Promise<Location> => {
+  const response = await axios.get(`${API_BASE_URL}/places/${locationId}`);
+  return response.data;
+};

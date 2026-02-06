@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Colors } from '@/constants/Colors';
-import { getChildren, getPlaces, Child, Location } from '@/services/api';
+import { getChildren, getPlaces, Child, Location, login } from '@/services/api';
 
 export default function MapScreen() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -10,8 +10,6 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const mapRef = useRef<MapView>(null);
 
-  // TODO: Remplacer par auth réelle
-  const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZW1haWwiOiJkZWNvdXJ0dGhvbWFzQG9yYW5nZS5mciIsImV4cCI6MTc3MDk5MDczOX0.XLPMauaGuS8_vu2p7-p4I_H8Qna1B4EitUv759luuy8';  // TODO: Replace with actual token
   useEffect(() => {
     loadData();
   }, []);
@@ -19,9 +17,18 @@ export default function MapScreen() {
   const loadData = async () => {
     try {
       const [childrenData, locationsData] = await Promise.all([
-        getChildren(TOKEN),
-        getPlaces(TOKEN),
+        getChildren(),
+        getPlaces(),
       ]);
+
+        // ✅ Login automatique si pas de token
+    const { isAuthenticated } = await import('@/services/auth');
+    const authenticated = await isAuthenticated();
+    
+    if (!authenticated) {
+      console.log('🔐 Not authenticated, logging in...');
+      await login('decourtthomas@orange.fr', 'test1234');
+    }
       
       setChildren(childrenData);
       setLocations(locationsData);

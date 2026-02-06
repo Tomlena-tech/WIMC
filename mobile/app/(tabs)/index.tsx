@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import ChildCard from '@/components/ChildCard';
-import { getChildren, getPlaces, Child, Location } from '@/services/api';
+import { getChildren, getPlaces, Child, Location, login } from '@/services/api';
 
 export default function ListScreen() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -10,8 +10,6 @@ export default function ListScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // ⚠️ TOKEN HARDCODÉ POUR MVP - À REMPLACER PAR VRAIE AUTH
-  const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZW1haWwiOiJkZWNvdXJ0dGhvbWFzQG9yYW5nZS5mciIsImV4cCI6MTc3MDk5MDczOX0.XLPMauaGuS8_vu2p7-p4I_H8Qna1B4EitUv759luuy8';  // TODO: Replace with actual token
   useEffect(() => {
     loadData();
   }, []);
@@ -20,10 +18,19 @@ export default function ListScreen() {
     try {
       setLoading(true);
       setError('');
+
+        // ✅ Login automatique si pas de token
+    const { isAuthenticated } = await import('@/services/auth');
+    const authenticated = await isAuthenticated();
+    
+    if (!authenticated) {
+      console.log('🔐 Not authenticated, logging in...');
+      await login('decourtthomas@orange.fr', 'test1234');
+    }
       
       const [childrenData, locationsData] = await Promise.all([
-        getChildren(TOKEN),
-        getPlaces(TOKEN),
+        getChildren(),
+        getPlaces(),
       ]);
       
       setChildren(childrenData);
