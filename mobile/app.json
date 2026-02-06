@@ -41,7 +41,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow WIMC to use your location."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

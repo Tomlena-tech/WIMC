@@ -8,6 +8,8 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
+from app.core.config import settings
+
 
 """checking by himself if the hash is out of date"""
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -57,8 +59,25 @@ def verify_token(token: str) -> dict:
         )
 
 
+def create_refresh_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
+    to_encode.update({
+        "exp": expire,
+        "type": "refresh"
+    })
+    encoded_jwt = jwt.encode(
+        to_encode, 
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+    return encoded_jwt
+
+
 def get_current_user(
-    credentials = Depends(security),
+    credentials=Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
     """Récupère l'utilisateur actuel depuis le token JWT"""

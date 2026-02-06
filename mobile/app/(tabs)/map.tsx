@@ -11,7 +11,7 @@ export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
 
   // TODO: Remplacer par auth réelle
-  const TOKEN = 'YOUR_JWT_TOKEN_HERE';  // TODO: Replace with actual token
+  const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2IiwiZW1haWwiOiJkZWNvdXJ0dGhvbWFzQG9yYW5nZS5mciIsImV4cCI6MTc3MDk5MDczOX0.XLPMauaGuS8_vu2p7-p4I_H8Qna1B4EitUv759luuy8';  // TODO: Replace with actual token
   useEffect(() => {
     loadData();
   }, []);

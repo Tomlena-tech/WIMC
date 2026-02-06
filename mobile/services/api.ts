@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';  // TODO: Replace with your local IP for testing
+const API_BASE_URL = 'http://10.5.1.110:8000';  // TODO: Replace with your local IP for testing
 
 const api = axios.create({
   baseURL: API_BASE_URL,
