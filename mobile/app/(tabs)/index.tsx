@@ -11,8 +11,7 @@ export default function ListScreen() {
   const [error, setError] = useState('');
 
   // ⚠️ TOKEN HARDCODÉ POUR MVP - À REMPLACER PAR VRAIE AUTH
-  const TOKEN = ''YOUR_TOKEN_HERE'';  // 🔧 Fais un login et copie le token
-
+  const TOKEN = 'YOUR_JWT_TOKEN_HERE';  // TODO: Replace with actual token
   useEffect(() => {
     loadData();
   }, []);

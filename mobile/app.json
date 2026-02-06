@@ -8,7 +8,7 @@
     "scheme": "wimc",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#4285F4"
     },
@@ -20,15 +20,19 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "AIzaSyAIy-E26PEXJaxeHVFf5VJTlMEI-HZMcpU"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.wimc.app",
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": ""
+        "googleMapsApiKey": "AIzaSyAIy-E26PEXJaxeHVFf5VJTlMEI-HZMcpU"
       }
     },
     "plugins": [
@@ -38,6 +42,11 @@
           "locationAlwaysAndWhenInUsePermission": "Allow WIMC to use your location."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b360a001-3258-4d41-90e0-394025b77890"
+      }
+    }
   }
 }
