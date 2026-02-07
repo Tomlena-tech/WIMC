@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import ChildCard from '@/components/ChildCard';
-import { getChildren, getPlaces, Child, Location, login } from '@/services/api';
+import { getChildren, getPlaces, Child, Location } from '@/services/api';
 
 export default function ListScreen() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -18,15 +18,6 @@ export default function ListScreen() {
     try {
       setLoading(true);
       setError('');
-
-        // ✅ Login automatique si pas de token
-    const { isAuthenticated } = await import('@/services/auth');
-    const authenticated = await isAuthenticated();
-    
-    if (!authenticated) {
-      console.log('🔐 Not authenticated, logging in...');
-      await login('decourtthomas@orange.fr', 'test1234');
-    }
       
       const [childrenData, locationsData] = await Promise.all([
         getChildren(),

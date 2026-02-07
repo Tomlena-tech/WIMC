@@ -20,15 +20,6 @@ export default function MapScreen() {
         getChildren(),
         getPlaces(),
       ]);
-
-        // ✅ Login automatique si pas de token
-    const { isAuthenticated } = await import('@/services/auth');
-    const authenticated = await isAuthenticated();
-    
-    if (!authenticated) {
-      console.log('🔐 Not authenticated, logging in...');
-      await login('decourtthomas@orange.fr', 'test1234');
-    }
       
       setChildren(childrenData);
       setLocations(locationsData);
