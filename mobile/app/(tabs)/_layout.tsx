@@ -29,12 +29,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Carte',
-          tabBarIcon: ({ color }) => <TabBarIcon name="map-marker" color={color} />,
-        }}
+  name="settings"
+  options={{
+    title: 'Paramètres',
+    tabBarIcon: ({ color, focused }) => (
+      <FontAwesome 
+        name="gear" 
+        size={focused ? 30 : 28} 
+        color={color} 
       />
+    ),
+  }}
+/>
     </Tabs>
   );
 }

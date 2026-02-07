@@ -20,6 +20,11 @@ axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // ✅ NE PAS refresh sur la route /login
+    if (originalRequest.url?.includes('/auth/login')) {
+      return Promise.reject(error);
+    }
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;

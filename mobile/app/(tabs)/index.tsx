@@ -18,6 +18,17 @@ export default function ListScreen() {
     try {
       setLoading(true);
       setError('');
+
+    // ✅ Vérifier qu'on est connecté sinon on charge pas
+    const { isAuthenticated } = await import('@/services/auth');
+    const authenticated = await isAuthenticated();
+    
+    if (!authenticated) {
+      // Pas connecté, ne rien charger
+      setLoading(false);
+      return;
+    }
+
       
       const [childrenData, locationsData] = await Promise.all([
         getChildren(),

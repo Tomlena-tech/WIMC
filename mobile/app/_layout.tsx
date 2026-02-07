@@ -8,7 +8,6 @@ import 'react-native-reanimated';
 import { useColorScheme } from 'react-native';
 import { isAuthenticated } from '@/services/auth';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -24,33 +23,36 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      setIsReady(true);
     }
   }, [loaded]);
 
-  // ✅ Vérifier l'authentification au démarrage
+  // ✅ UN SEUL useEffect pour auth + navigation
   useEffect(() => {
-    const checkAuth = async () => {
+    const handleNavigation = async () => {
+      if (!isReady) return;
+
+      // 1. Vérifier l'auth
       const authenticated = await isAuthenticated();
+      console.log('🔍 Auth:', authenticated, 'Segments:', segments);
+      
+      // 2. Mettre à jour l'état
       setIsLoggedIn(authenticated);
-      setIsReady(true);
+      
+      // 3. Naviguer immédiatement
+      const inAuthGroup = segments[0] === '(tabs)';
+      
+      if (!authenticated && inAuthGroup) {
+        console.log('➡️ → Login');
+        router.replace('/login');
+      } else if (authenticated && !inAuthGroup && segments[0] !== 'login') {
+        console.log('➡️ → App');
+        router.replace('/(tabs)');
+      }
     };
-    checkAuth();
-  }, []);
 
-  // ✅ Navigation conditionnelle
-  useEffect(() => {
-    if (!isReady) return;
-
-    const inAuthGroup = segments[0] === '(tabs)';
-
-    if (!isLoggedIn && inAuthGroup) {
-      // Pas connecté mais dans l'app → rediriger vers login
-      router.replace('/login');
-    } else if (isLoggedIn && !inAuthGroup) {
-      // Connecté mais pas dans l'app → rediriger vers app
-      router.replace('/(tabs)');
-    }
-  }, [isLoggedIn, segments, isReady]);
+    handleNavigation();
+  }, [segments, isReady]);
 
   if (!loaded || !isReady) {
     return null;

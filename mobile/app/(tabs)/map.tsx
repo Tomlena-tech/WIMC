@@ -20,6 +20,17 @@ export default function MapScreen() {
         getChildren(),
         getPlaces(),
       ]);
+
+    // ✅ Vérifier qu'on est connecté et fait attendre chargement de map
+    const { isAuthenticated } = await import('@/services/auth');
+    const authenticated = await isAuthenticated();
+    
+    if (!authenticated) {
+      // Pas connecté, ne rien charger
+      setLoading(false);
+      return;
+    }
+
       
       setChildren(childrenData);
       setLocations(locationsData);

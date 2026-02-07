@@ -20,25 +20,30 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-      return;
-    }
+  if (!email || !password) {
+    Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+    return;
+  }
 
-    try {
-      setLoading(true);
-      await login(email, password);
-      // Login successful, tokens stored in SecureStore
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert(
-        'Erreur de connexion',
-        error.response?.data?.detail || 'Email ou mot de passe incorrect'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    await login(email, password);
+    
+    console.log('✅ Login réussi');
+
+    await new Promise(resolve => setTimeout(resolve, 100)); // on attend un peu que le token se stocke bien
+
+    router.replace('/(tabs)');
+    
+  } catch (error: any) {
+    Alert.alert(
+      'Erreur de connexion',
+      error.response?.data?.detail || 'Email ou mot de passe incorrect'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView
