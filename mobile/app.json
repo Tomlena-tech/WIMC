@@ -33,6 +33,9 @@
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyAIy-E26PEXJaxeHVFf5VJTlMEI-HZMcpU"
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "plugins": [

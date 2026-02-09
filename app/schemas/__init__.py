@@ -1,25 +1,28 @@
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
+"""
+Schemas package - Centralized Pydantic models export
+"""
 
-"""Model inheritance for the other"""
+# Authentication schemas
+from app.schemas.auth import (
+    UserBase,
+    UserCreate,
+    UserResponse,
+    LoginRequest,
+    LoginResponse,
+)
 
+# Child schemas
+from app.schemas.child import *
 
-class UserBase(BaseModel):
-    email: EmailStr
-    username: str
+# Location schemas
+from app.schemas.location import *
 
-
-class UserCreate(UserBase):
-    password: str
-
-
-class UserResponse(UserBase):
-    id: int
-    created_at: datetime
-
-
-"""Traduce (from Pydantic) data into SQL to json"""
-
-
-class Config:
-    from_attributes = True
+__all__ = [
+    # User/Auth
+    "UserBase",
+    "UserCreate", 
+    "UserResponse",
+    "LoginRequest",
+    "LoginResponse",
+    # Child & Location exports handled by their modules
+]

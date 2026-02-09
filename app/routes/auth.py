@@ -1,49 +1,40 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import (
-    hash_password,
-    verify_password,
-    create_access_token,
-    create_refresh_token,
-)
-from app.schemas import UserCreate, UserResponse
+from app.core.security import hash_password
+from app.schemas import UserCreate, UserResponse, LoginRequest
 from app.models.user import User
+from app.services.auth_service import authenticate_user, generate_auth_tokens
 from typing import Optional
-from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    # check if email already exists
-
+    """
+    Enregistre un nouvel utilisateur
+    """
+    # Vérifier si email existe déjà
     if db.query(User).filter(User.email == user_data.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
 
+    # Vérifier si username existe déjà
     if db.query(User).filter(User.username == user_data.username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
 
+    # Créer le nouveau user
     hashed_pwd = hash_password(user_data.password)
     new_user = User(
-     email=user_data.email,
-     username=user_data.username,
-     hashed_password=hashed_pwd
+        email=user_data.email,
+        username=user_data.username,
+        hashed_password=hashed_pwd
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
     return new_user
-
-
-""" endpoint auth/login"""
 
 
 @router.post("/login")
@@ -54,18 +45,15 @@ def login(
     db: Session = Depends(get_db)
 ):
     """
-    Login endpoint supporting both: 
-    (On laisse le choix soit en body soit query params)
+    Login endpoint supporting both:
     - Body JSON (secure, for mobile app)
     - Query params (for MCP compatibility)
     """
-    # Déterminer la source des credentials
+    # 1️⃣ Extraire les credentials (Body ou Query params)
     if request:
-        # Mobile app utilise Body JSON (sécurisé)
         user_email = request.email
         user_password = request.password
     elif email and password:
-        # MCP utilise Query params (compatibilité)
         user_email = email
         user_password = password
     else:
@@ -74,30 +62,11 @@ def login(
             detail="Provide credentials via request body or query parameters"
         )
 
-    # Trouve le user
-    user = db.query(User).filter(User.email == user_email).first()
+    # 2️⃣ Authentifier l'utilisateur (Service fait le travail !)
+    user = authenticate_user(db, user_email, user_password)
 
-    # Vérifie user existe
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # 3️⃣ Générer les tokens (Service fait le travail !)
+    tokens = generate_auth_tokens(user)
 
-    # Vérifie password
-    if not verify_password(user_password, str(user.hashed_password)):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # Crée le token
-    token = create_access_token(
-        data={"sub": str(user.id), "email": user.email}
-    )
-    refresh_token = create_refresh_token(
-        data={"sub": str(user.id), "email": user.email}
-)
-
-    return {
-        "access_token": token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "expires_in": 604800,
-        "user_id": user.id,
-        "email": user.email
-    }
+    # 4️⃣ Retourner la réponse
+    return tokens
