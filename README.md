@@ -93,3 +93,45 @@ Docs: http://localhost:8000/docs
 - Sprint 1: Auth JWT (28 janv - 3 fév)
 - Sprint 2: CRUD Lieux (3-9 fév)
 - Sprint 3: MCP + Claude (10-20 fév)
+
+## 📱 Mobile App (React Native)
+- **Frontend:** React Native + Expo
+- **Features:** Login, Children list, Map view, Settings
+- **Auth:** JWT tokens with SecureStore
+- **Maps:** Google Maps integration
+
+## 🏗️ Clean Architecture
+```
+app/
+├── routes/         # API endpoints (orchestration)
+├── services/       # Business logic
+├── models/         # Database models (SQLAlchemy)
+├── schemas/        # Validation (Pydantic)
+└── core/           # Security, database config
+```
+
+## 🚀 Installation
+
+### Backend
+```bash
+cd ~/WIMC
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Mobile
+```bash
+cd ~/WIMC/mobile
+npm install
+npx expo start --dev-client
+```
+
+## ✅ Features Completed
+- [x] JWT Authentication (login/register)
+- [x] CRUD Children
+- [x] CRUD Locations with geolocation
+- [x] Mobile app with Google Maps
+- [x] MCP integration with Claude AI
+- [x] Clean Architecture refactoring
