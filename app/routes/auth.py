@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import hash_password
 from app.schemas import UserCreate, UserResponse, LoginRequest
 from app.models.user import User
-from app.services.auth_service import authenticate_user, generate_auth_tokens
+from app.services.auth_service import (
+    authenticate_user,
+    generate_auth_tokens,
+    create_user
+)
 from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -15,25 +18,10 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Enregistre un nouvel utilisateur
     """
-    # Vérifier si email existe déjà
-    if db.query(User).filter(User.email == user_data.email).first():
-        raise HTTPException(status_code=400, detail="Email already exists")
-
-    # Vérifier si username existe déjà
-    if db.query(User).filter(User.username == user_data.username).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
-
-    # Créer le nouveau user
-    hashed_pwd = hash_password(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        username=user_data.username,
-        hashed_password=hashed_pwd
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
+    # Appeler le service pour créer le user
+    new_user = create_user(db, user_data)
+    
+    # Retourner le user créé
     return new_user
 
 

@@ -77,3 +77,52 @@ def generate_auth_tokens(user: User) -> dict:
         "user_id": user.id,
         "email": user.email
     }
+
+
+def create_user(db: Session, user_data) -> User:
+    """
+    Crée un nouvel utilisateur après validation
+    
+    Args:
+        db: Session de base de données SQLAlchemy
+        user_data: Données utilisateur (UserCreate schema)
+    
+    Returns:
+        User: Le nouvel utilisateur créé
+    
+    Raises:
+        HTTPException 400: Si email ou username existe déjà
+    """
+    from app.core.security import hash_password
+    
+    # 1. Vérifier si l'email existe déjà
+    if db.query(User).filter(User.email == user_data.email).first():
+        raise HTTPException(
+            status_code=400,
+            detail="Email already exists"
+        )
+    
+    # 2. Vérifier si le username existe déjà
+    if db.query(User).filter(User.username == user_data.username).first():
+        raise HTTPException(
+            status_code=400,
+            detail="Username already exists"
+        )
+    
+    # 3. Hasher le password
+    hashed_pwd = hash_password(user_data.password)
+    
+    # 4. Créer le nouvel utilisateur
+    new_user = User(
+        email=user_data.email,
+        username=user_data.username,
+        hashed_password=hashed_pwd
+    )
+    
+    # 5. Sauvegarder en base de données
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    # 6. Retourner le user créé
+    return new_user

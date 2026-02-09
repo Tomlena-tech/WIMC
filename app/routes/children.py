@@ -1,28 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
-
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
-from app.models.child import Child
 from app.schemas.child import ChildCreate, ChildResponse, ChildUpdate
+from app.services.child_service import (
+    create_child,
+    get_children_by_parent,
+    get_child_by_id,
+    update_child,
+    delete_child
+)
 
 router = APIRouter(prefix="/children", tags=["children"])
 
 
 @router.post("/", response_model=ChildResponse, status_code=status.HTTP_201_CREATED)
-def create_child(
+def create_child_endpoint(
     child_data: ChildCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Créer un enfant pour l'utilisateur connecté"""
-    child = Child(**child_data.dict(), parent_id=current_user.id)
-    db.add(child)
-    db.commit()
-    db.refresh(child)
-    return child
+    return create_child(db, child_data, current_user.id)
 
 
 @router.get("/", response_model=List[ChildResponse])
@@ -31,66 +32,35 @@ def get_my_children(
     current_user: User = Depends(get_current_user)
 ):
     """Récupérer tous les enfants de l'utilisateur connecté"""
-    children = db.query(Child).filter(Child.parent_id == current_user.id).all()
-    return children
+    return get_children_by_parent(db, current_user.id)
 
 
 @router.get("/{child_id}", response_model=ChildResponse)
-def get_child(
+def get_child_endpoint(
     child_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Récupérer un enfant spécifique"""
-    child = db.query(Child).filter(
-        Child.id == child_id,
-        Child.parent_id == current_user.id
-    ).first()
-    
-    if not child:
-        raise HTTPException(status_code=404, detail="Child not found")
-    
-    return child
+    return get_child_by_id(db, child_id, current_user.id)
 
 
 @router.put("/{child_id}", response_model=ChildResponse)
-def update_child(
+def update_child_endpoint(
     child_id: int,
     child_data: ChildUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Modifier un enfant"""
-    child = db.query(Child).filter(
-        Child.id == child_id,
-        Child.parent_id == current_user.id
-    ).first()
-    
-    if not child:
-        raise HTTPException(status_code=404, detail="Child not found")
-    
-    for key, value in child_data.dict(exclude_unset=True).items():
-        setattr(child, key, value)
-    
-    db.commit()
-    db.refresh(child)
-    return child
+    return update_child(db, child_id, current_user.id, child_data)
 
 
 @router.delete("/{child_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_child(
+def delete_child_endpoint(
     child_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Supprimer un enfant (et toutes ses locations)"""
-    child = db.query(Child).filter(
-        Child.id == child_id,
-        Child.parent_id == current_user.id
-    ).first()
-    
-    if not child:
-        raise HTTPException(status_code=404, detail="Child not found")
-    
-    db.delete(child)
-    db.commit()
+    delete_child(db, child_id, current_user.id)
