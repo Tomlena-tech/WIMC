@@ -1,39 +1,59 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Colors } from '@/constants/Colors';
-import { getChildren, getPlaces, Child, Location, login } from '@/services/api';
+import { getChildren, getPlaces, Child, Location, getAllChildrenGPSPositions } from '@/services/api';
 
 export default function MapScreen() {
   const [children, setChildren] = useState<Child[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [gpsPositions, setGpsPositions] = useState<any[]>([]); //utilise position Iphone
   const [loading, setLoading] = useState(true);
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     loadData();
   }, []);
+// 🆕 Polling GPS toutes les 10 secondes (seulement si des enfants sont chargés)
+  useEffect(() => {
+  if (children.length === 0) return;
 
+  const interval = setInterval(async () => {
+    try {
+      const gpsData = await getAllChildrenGPSPositions();
+      console.log('🔄 GPS refresh:', gpsData);
+      setGpsPositions(gpsData);
+    } catch (err) {
+      console.error('Erreur refresh GPS:', err);
+    }
+  }, 10000);
+
+  return () => clearInterval(interval);
+}, [children]);
   const loadData = async () => {
     try {
+      // ✅ Vérifier qu'on est connecté AVANT de faire les appels API
+      const { isAuthenticated } = await import('@/services/auth');
+      const authenticated = await isAuthenticated();
+
+      if (!authenticated) {
+        setLoading(false);
+        return;
+      }
+
       const [childrenData, locationsData] = await Promise.all([
         getChildren(),
         getPlaces(),
       ]);
 
-    // ✅ Vérifier qu'on est connecté et fait attendre chargement de map
-    const { isAuthenticated } = await import('@/services/auth');
-    const authenticated = await isAuthenticated();
-    
-    if (!authenticated) {
-      // Pas connecté, ne rien charger
-      setLoading(false);
-      return;
-    }
-
       
       setChildren(childrenData);
       setLocations(locationsData);
+
+      // 🆕 Charger positions GPS
+      const gpsData = await getAllChildrenGPSPositions();
+      console.log('📍 GPS reçu:', gpsData);
+      setGpsPositions(gpsData);
       
       // Centrer sur la position actuelle (dernière location)
       if (locationsData.length > 0) {
@@ -165,32 +185,27 @@ export default function MapScreen() {
         }}
       >
         {/* Pour chaque enfant */}
+        {/* Zones de confiance pour chaque enfant */}
         {children.map((child) => {
           const currentPosition = getCurrentPosition(child.id);
           const safeZones = getSafeZones(child.id);
-          
+
           if (!currentPosition) return null;
-          
-          const inSafeZone = isInSafeZone(currentPosition, safeZones);
 
           return (
-            <React.Fragment key={child.id}>
-              {/* Zones de confiance (cercles verts) */}
+            <React.Fragment key={`zones-${child.id}`}>
               {safeZones.map((zone) => (
                 <React.Fragment key={zone.id}>
-                  {/* Cercle de sécurité */}
                   <Circle
                     center={{
                       latitude: zone.latitude,
                       longitude: zone.longitude,
                     }}
-                    radius={200} // 200 mètres
-                    fillColor="rgba(76, 175, 80, 0.2)" // Vert transparent
+                    radius={200}
+                    fillColor="rgba(76, 175, 80, 0.2)"
                     strokeColor={Colors.light.success}
                     strokeWidth={2}
                   />
-                  
-                  {/* Marqueur zone (petit point) */}
                   <Marker
                     coordinate={{
                       latitude: zone.latitude,
@@ -205,26 +220,33 @@ export default function MapScreen() {
                   </Marker>
                 </React.Fragment>
               ))}
-
-              {/* Position actuelle de l'enfant (Gabbychat) */}
-              <Marker
-  coordinate={{
-    latitude: currentPosition.latitude,
-    longitude: currentPosition.longitude,
-  }}
-  title={child.name}
-  description={`${currentPosition.name} - ${new Date(currentPosition.created_at).toLocaleString('fr-FR', { 
-    day: '2-digit', 
-    month: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  })}`}
-  image={require('@/assets/images/Gabby.png')}
-  anchor={{ x: 0.5, y: 1 }}
-/>
             </React.Fragment>
           );
         })}
+
+        {/* Marqueurs GPS temps réel (indépendants des places) */}
+        {children.map((child) =>
+          gpsPositions
+            .filter(gps => gps && gps.child_id === child.id && gps.latitude !== null)
+            .map((gps) => (
+              <Marker
+                key={`gps-${child.id}`}
+                coordinate={{
+                  latitude: gps.latitude,
+                  longitude: gps.longitude,
+                }}
+                title={child.name}
+                description={`GPS - ${new Date(gps.last_update).toLocaleString('fr-FR')}`}
+                anchor={{ x: 0.5, y: 1 }}
+              >
+                <Image
+                  source={require('@/assets/images/Gabby.png')}
+                  style={{ width: 40, height: 40, borderRadius: 20 }}
+                  resizeMode="cover"
+                />
+              </Marker>
+            ))
+        )}
       </MapView>
 
       {/* Bouton recentrer */}
