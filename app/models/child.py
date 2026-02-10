@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
+from datetime import datetime
 
 
 class Child(Base):
@@ -15,6 +16,9 @@ class Child(Base):
     notes = Column(Text, nullable=True)
     battery = Column(Integer, default=100)  
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_latitude = Column(Float, nullable=True)
+    last_longitude = Column(Float, nullable=True)
+    last_update = Column(DateTime, nullable=True)
 
     # Relations
     parent = relationship("User", back_populates="children")
