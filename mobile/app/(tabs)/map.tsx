@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Colors } from '@/constants/Colors';
-import { getChildren, getPlaces, Child, Location, getAllChildrenGPSPositions } from '@/services/api';
+import { getChildren, getPlaces, Child, Location, getAllChildrenGPSPositions, getChildGPSPosition } from '@/services/api';
 
 export default function MapScreen() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -11,6 +11,7 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const mapRef = useRef<MapView>(null);
 
+  
   useEffect(() => {
     loadData();
   }, []);
@@ -30,6 +31,22 @@ export default function MapScreen() {
 
   return () => clearInterval(interval);
 }, [children]);
+// centre la pisition de Léna si GPS available
+useEffect(() => {
+  if (gpsPositions.length > 0 && !loading) {
+    const firstChildGPS = gpsPositions.find(gps => gps.latitude !== null);
+    if (firstChildGPS) {
+      setTimeout(() => {
+        mapRef.current?.animateToRegion({
+          latitude: firstChildGPS.latitude,
+          longitude: firstChildGPS.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }, 1000);
+      }, 500);
+    }
+  }
+}, [gpsPositions, loading]);
   const loadData = async () => {
     try {
       // ✅ Vérifier qu'on est connecté AVANT de faire les appels API
@@ -54,16 +71,9 @@ export default function MapScreen() {
       const gpsData = await getAllChildrenGPSPositions();
       console.log('📍 GPS reçu:', gpsData);
       setGpsPositions(gpsData);
-      
-      // Centrer sur la position actuelle (dernière location)
-      if (locationsData.length > 0) {
-        const sortedLocations = [...locationsData].sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        centerOnLocation(sortedLocations[0]);
-      }
-    } catch (err) {
-      console.error('Erreur:', err);
+            
+    } catch (error) {
+      console.error('Erreur chargement données:', error);
     } finally {
       setLoading(false);
     }
@@ -79,20 +89,14 @@ export default function MapScreen() {
   };
 
   // Trouver la position actuelle (dernière location) pour chaque enfant
-  const getCurrentPosition = (childId: number) => {
-    const childLocations = locations.filter(loc => loc.child_id === childId);
-    if (childLocations.length === 0) return null;
-    
-    childLocations.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    
-    return childLocations[0]; // La plus récente
+  const getCurrentGPSPosition = (childId: number) => {
+   //cherche dans le GPS (positions)
+   return gpsPositions.find(gps => gps.child_id ===childId && gps.latitude !== null);
   };
 
   // Trouver toutes les zones de confiance (sauf position actuelle)
   const getSafeZones = (childId: number) => {
-    const currentPosition = getCurrentPosition(childId);
+    const currentPosition = getCurrentGPSPosition(childId);
     if (!currentPosition) return [];
     
     return locations.filter(loc => 
@@ -135,7 +139,7 @@ export default function MapScreen() {
   const countSafe = () => {
     let safe = 0;
     children.forEach(child => {
-      const currentPosition = getCurrentPosition(child.id);
+      const currentPosition = getCurrentGPSPosition(child.id);
       if (!currentPosition) return;
       
       const safeZones = getSafeZones(child.id);
@@ -187,7 +191,7 @@ export default function MapScreen() {
         {/* Pour chaque enfant */}
         {/* Zones de confiance pour chaque enfant */}
         {children.map((child) => {
-          const currentPosition = getCurrentPosition(child.id);
+          const currentPosition = getCurrentGPSPosition(child.id);
           const safeZones = getSafeZones(child.id);
 
           if (!currentPosition) return null;
@@ -224,9 +228,13 @@ export default function MapScreen() {
           );
         })}
 
-        {/* Marqueurs GPS temps réel (indépendants des places) */}
-        {children.map((child) =>
-          gpsPositions
+        {/* Marqueurs GPS temps réel GABBY / LENA (indépendants des places) */}
+        {children.map((child) => {
+          const currentPosition = getCurrentGPSPosition(child.id);
+          const safeZones = getSafeZones(child.id);
+          const isSafe = currentPosition && isInSafeZone(currentPosition, safeZones);
+
+          return gpsPositions
             .filter(gps => gps && gps.child_id === child.id && gps.latitude !== null)
             .map((gps) => (
               <Marker
@@ -237,44 +245,49 @@ export default function MapScreen() {
                 }}
                 title={child.name}
                 description={`GPS - ${new Date(gps.last_update).toLocaleString('fr-FR')}`}
-                anchor={{ x: 0.5, y: 1 }}
+                anchor={{ x: 0.5, y: 0.5 }}
+                tracksViewChanges={true}
               >
-                <Image
-                  source={require('@/assets/images/Gabby.png')}
-                  style={{ width: 40, height: 40, borderRadius: 20 }}
-                  resizeMode="cover"
-                />
+                <View style={{alignItems: "center", justifyContent: "center" ,}}>
+                  {/* HALO */}
+                  {!isSafe && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        width: 60,
+                        height: 60,
+                        borderRadius: 30,
+                        backgroundColor: "rgba(255,0,0,0.25)",
+                      }}
+                    />
+                  )}
+                  <Image
+                    source={require('@/assets/images/Gabby.png')}
+                    style={{ width: 40, height: 40}}
+                  />
+                </View>
               </Marker>
-            ))
-        )}
+            ));
+        })}
       </MapView>
 
-      {/* Bouton recentrer */}
+      {/* Bouton ROUGE pour s'auto-recentrer */}
       <TouchableOpacity
         style={styles.centerButton}
         onPress={() => {
-          const firstChild = children[0];
-          if (firstChild) {
-            const currentPos = getCurrentPosition(firstChild.id);
-            if (currentPos) centerOnLocation(currentPos);
+          const firstGPS = gpsPositions.find(gps => gps.latitude !== null);
+          if (firstGPS) {
+            mapRef.current?.animateToRegion({
+              latitude: firstGPS.latitude,
+              longitude: firstGPS.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }, 1000)
           }
         }}
       >
         <Text style={styles.centerButtonText}>📍</Text>
       </TouchableOpacity>
-
-      {/* Badge sécurité */}
-      {children.length > 0 && (
-        <View style={styles.safeBadge}>
-          <View style={[
-            styles.safeDot,
-            { backgroundColor: safeCount === children.length ? Colors.light.success : Colors.light.warning }
-          ]} />
-          <Text style={styles.safeText}>
-            {safeCount === children.length ? `${safeCount} en sécurité` : `Attention`}
-          </Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -296,7 +309,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.light.white,
   },
-  statusDot: {
+  statusDot: { //Bouton status en ligne ou pas !
     width: 8,
     height: 8,
     borderRadius: 4,
@@ -314,8 +327,8 @@ const styles = StyleSheet.create({
   // Marqueur position actuelle (Gabbychat)
   currentPositionMarker: {
     borderRadius: 30,
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
