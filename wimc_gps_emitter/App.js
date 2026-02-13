@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import * as Location from 'expo-location';
+import * as Battery from 'expo-battery';
 import axios from 'axios';
 
 const API_URL = 'http://10.5.1.110:8000/api/gps'; // ⚠️ REMPLACE PAR TON IP
@@ -24,21 +25,32 @@ export default function App() {
   // Fonction d'envoi position
   const sendLocation = async (coords) => {
     try {
+      const batteryLevel = await Battery.getBatteryLevelAsync();
+      const batteryPercent = Math.round(batteryLevel * 100);
+
+
     console.log('🔍 API_URL:', API_URL);
     console.log('🔍 URL complète:', `${API_URL}/children/${CHILD_ID}/update`);
+    console.log('📦 Données envoyées:', {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        timestamp: new Date().toISOString(),
+        battery: batteryPercent
+      });
       const response = await axios.post(
         `${API_URL}/children/${CHILD_ID}/update`,
         {
           latitude: coords.latitude,
           longitude: coords.longitude,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          battery: batteryPercent
         }
       );
       console.log('✅ Position envoyée:', response.data);
       setLocation(coords);
     } catch (error) {
       console.error('❌ Erreur envoi:', error.message);
-      console.error('❌ URL:', error.config?.url);  // ← AJOUTE CETTE LIGNE
+      console.error('❌ URL:', error.config?.url);
 
       Alert.alert('Erreur', 'Impossible d\'envoyer la position');
     }

@@ -20,9 +20,8 @@ def update_child_gps(
     # Mettre à jour position
     child.last_latitude = gps_data.latitude
     child.last_longitude = gps_data.longitude
-    child.last_update = datetime.fromisoformat(
-        gps_data.timestamp.replace('Z', '+00:00')
-    )
+    child.last_update = gps_data.timestamp
+    child.battery = gps_data.battery
     
     db.commit()
     db.refresh(child)
@@ -31,7 +30,8 @@ def update_child_gps(
         child_id=child.id,
         latitude=child.last_latitude,
         longitude=child.last_longitude,
-        last_update=child.last_update
+        last_update=child.last_update,
+        battery=child.battery
     )
 
 
@@ -49,5 +49,6 @@ def get_child_last_position(
         child_id=child.id,
         latitude=child.last_latitude,
         longitude=child.last_longitude,
-        last_update=child.last_update
+        last_update=child.last_update,
+        battery=child.battery
     )

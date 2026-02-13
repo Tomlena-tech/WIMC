@@ -8,6 +8,7 @@ class GPSUpdate(BaseModel):
     latitude: float
     longitude: float
     timestamp: str  # ISO format
+    battery: Optional[int]
 
 
 class GPSResponse(BaseModel):
@@ -16,6 +17,7 @@ class GPSResponse(BaseModel):
     latitude: Optional[float]
     longitude: Optional[float]
     last_update: Optional[datetime]
+    battery: Optional[int]
     
     class Config:
         from_attributes = True
