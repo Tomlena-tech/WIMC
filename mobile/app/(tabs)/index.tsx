@@ -2,41 +2,69 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import ChildCard from '@/components/ChildCard';
-import { getChildren, getPlaces, Child, Location } from '@/services/api';
+import { getChildren, Child, getAllChildrenGPSPositions } from '@/services/api';
 
-export default function ListScreen() {
-  const [children, setChildren] = useState<Child[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type GPSPosition = {
+  child_id: number;
+  latitude: number;
+  longitude: number;
+  timestamp: string;
+};
+export default function ListScreen() { //useState = stocke une donnée dans 1 composant et = Re-render
+  const [children, setChildren] = useState<Child[]>([]); // on s'assure que le tableau enfant contient uniquement le objets enfant
+  const [loading, setLoading] = useState(true); //spinner afin d'eviter de montrer qqch de prématuré
+  const [error, setError] = useState(''); //gestion des erreurs eventuelles
+  const [gpsPositions, setGpsPositions] = useState<GPSPosition[]>([]); //gps contient les pos et set les mets a jours et  tout ça dans 1 tableau d'objet qui est vide au depart
+  const [gpsHistory, setGpsHistory] = useState<GPSPosition[]>([]); // 📍 Historique local
 
+  // 🔄 Chargement initial
   useEffect(() => {
     loadData();
   }, []);
 
+  // 🔄 Polling automatique toutes les 10 secondes = update la position gps toutes les 10sec (timer)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadGPSData(); // Recharge uniquement les GPS
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 📡 Chargement complet (enfants + GPS)
   const loadData = async () => {
     try {
-      setLoading(true);
-      setError('');
+      setLoading(true); //spinner
+      setError(''); //remts les erreurs a 0
 
-    // ✅ Vérifier qu'on est connecté sinon on charge pas
-    const { isAuthenticated } = await import('@/services/auth');
-    const authenticated = await isAuthenticated();
-    
-    if (!authenticated) {
-      // Pas connecté, ne rien charger
-      setLoading(false);
-      return;
-    }
-
+      // ✅ Vérifier authentification
+      const { isAuthenticated } = await import('@/services/auth'); // "prends la fonction isAuth qui se trouve dans await import
+      const authenticated = await isAuthenticated();
       
-      const [childrenData, locationsData] = await Promise.all([
-        getChildren(),
-        getPlaces(),
-      ]);
+      if (!authenticated) {
+        setLoading(false);
+        return;
+      }
+
+      // Charger enfants + GPS
+      const childrenData = await getChildren();
+      const gpsData = await getAllChildrenGPSPositions();
       
       setChildren(childrenData);
-      setLocations(locationsData);
+      setGpsPositions(gpsData);
+
+      // 📍 Ajouter au début de l'historique (éviter doublons)
+      setGpsHistory(prev => {
+        const newPositions = gpsData.filter(
+          newPos => !prev.some(
+            oldPos => 
+              oldPos.child_id === newPos.child_id && 
+              oldPos.timestamp === newPos.timestamp
+          )
+        );
+        return [...newPositions, ...prev].slice(0, 100); // Garde 100 dernières
+      });
+
     } catch (err: any) {
       console.error('Erreur chargement données:', err);
       setError(err.message || 'Erreur de connexion');
@@ -45,41 +73,70 @@ export default function ListScreen() {
     }
   };
 
-  // Trouver la location la plus récente pour un enfant
-  const getCurrentLocation = (childId: number) => {
-    const childLocations = locations.filter(loc => loc.child_id === childId);
-    if (childLocations.length === 0) return undefined;
-    
-    // Trier par date (plus récent en premier)
-    childLocations.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    
-    return childLocations[0];
+  // 📡 Recharger uniquement GPS (pour polling)
+  const loadGPSData = async () => {
+    try {
+      const { isAuthenticated } = await import('@/services/auth');
+      const authenticated = await isAuthenticated();
+      
+      if (!authenticated) return;
+
+      const gpsData = await getAllChildrenGPSPositions();
+      setGpsPositions(gpsData);
+
+      // 📍 Ajouter au début de l'historique
+      setGpsHistory(prev => {
+        const newPositions = gpsData.filter(
+          newPos => !prev.some(
+            oldPos => 
+              oldPos.child_id === newPos.child_id && 
+              oldPos.timestamp === newPos.timestamp
+          )
+        );
+        return [...newPositions, ...prev].slice(0, 100);
+      });
+
+    } catch (err: any) {
+      console.error('Erreur refresh GPS:', err);
+    }
   };
 
-  // Compter statuts
+  // 📍 Trouver la position GPS la plus récente pour un enfant
+  const getCurrentGPSPosition = (childId: number) => { //fct qui prend le N° d el'enfant en param 
+    return gpsPositions.find(gps => gps.child_id === childId); //qui return qqch ds le tableau gpsPositions compare les id
+  };
+
+  // 🔢 Compter statuts basés sur GPS
   const countStatuses = () => {
     let safe = 0;
     let warning = 0;
+    let unknown = 0;
     
-    children.forEach(child => {
-      const location = getCurrentLocation(child.id);
-      if (!location) return;
+    children.forEach(child => { //ds le tab chidren pour chqs elements
+    //  regarde gps et decide si il est safe ..
+      const gps = getCurrentGPSPosition(child.id);
       
+      if (!gps || !gps.timestamp) {
+        unknown++;
+        return;
+      }
+      
+      // Calcule du temps ecoulé de la position gps (utile de le mettre sur la card??)
       const diffMins = Math.floor(
-        (new Date().getTime() - new Date(location.created_at).getTime()) / 60000
+        (new Date().getTime() - new Date(gps.timestamp).getTime()) / 60000
       );
       
       if (diffMins < 5) safe++;
-      else warning++;
+      else if (diffMins < 15) warning++;
+      else unknown++;
     });
     
-    return { safe, warning, total: children.length };
+    return { safe, warning, unknown, total: children.length };
   };
 
   const stats = countStatuses();
 
+  // 🔄 Loading / le HEADER Bleu 
   if (loading) {
     return (
       <View style={styles.container}>
@@ -95,6 +152,7 @@ export default function ListScreen() {
     );
   }
 
+  // ❌ Erreur
   if (error) {
     return (
       <View style={styles.container}>
@@ -128,18 +186,24 @@ export default function ListScreen() {
           <Text style={styles.sectionTitle}>Mes enfants</Text>
           <Text style={styles.sectionSubtitle}>
             {children.length} enfant{children.length > 1 ? 's' : ''} suivi{children.length > 1 ? 's' : ''}
+          </Text> 
+          {/* 📍 Indicateur historique */} 
+          <Text style={styles.historyIndicator}>
+            📍 {gpsHistory.length} positions en historique
           </Text>
         </View>
 
         {/* Liste enfants */}
         {children.map(child => {
-          const location = getCurrentLocation(child.id);
+          const gps = getCurrentGPSPosition(child.id);
           return (
             <ChildCard
               key={child.id}
               child={child}
-              currentLocation={location?.name}
-              lastUpdate={location?.created_at}
+              currentLocation={gps && gps.latitude !== null && gps.longitude !== null 
+                ? `${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}` 
+                : 'GPS indisponible'}              
+                lastUpdate={gps?.timestamp}
             />
           );
         })}
@@ -148,15 +212,15 @@ export default function ListScreen() {
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats.safe}</Text>
-            <Text style={[styles.statLabel, { color: Colors.light.success }]}>En sécurité</Text>
+            <Text style={[styles.statLabel, { color: Colors.light.success }]}>Récent</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats.warning}</Text>
-            <Text style={[styles.statLabel, { color: Colors.light.warning }]}>Attention</Text>
+            <Text style={[styles.statLabel, { color: Colors.light.warning }]}>Ancien</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statNumber}>{stats.unknown}</Text>
+            <Text style={[styles.statLabel, { color: Colors.light.textSecondary }]}>Inconnu</Text>
           </View>
         </View>
 
@@ -219,6 +283,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.light.textSecondary,
   },
+  historyIndicator: {
+    fontSize: 12,
+    color: Colors.light.primary,
+    marginTop: 4,
+  },
   statsContainer: {
     flexDirection: 'row',
     marginHorizontal: 16,
@@ -253,7 +322,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    opacity: 0.5,  // Disabled pour MVP
+    opacity: 0.5,
   },
   addButtonText: {
     color: Colors.light.white,
