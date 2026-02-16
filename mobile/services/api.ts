@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAccessToken, refreshAccessToken, storeTokens } from './auth';
 
-const API_BASE_URL = 'http://10.5.1.110:8000';  // TODO: Mettre ton IP actuelle
+const API_BASE_URL = 'http://192.168.1.30:8000';  // TODO: Mettre ton IP actuelle
 
 // ✅ Interceptor : Ajouter token automatiquement
 axios.interceptors.request.use(
