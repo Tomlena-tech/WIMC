@@ -11,12 +11,21 @@ type GPSPosition = {
   last_update: string;
   battery?: number;
 };
+
+type SafeZoneStatus = {
+  child_id: number;
+  in_safe_zone: boolean;
+
+};  
+
 export default function ListScreen() { //useState = stocke une donnée dans 1 composant et = Re-render
   const [children, setChildren] = useState<Child[]>([]); // on s'assure que le tableau enfant contient uniquement le objets enfant
   const [loading, setLoading] = useState(true); //spinner afin d'eviter de montrer qqch de prématuré
   const [error, setError] = useState(''); //gestion des erreurs eventuelles
   const [gpsPositions, setGpsPositions] = useState<GPSPosition[]>([]); //gps contient les pos et set les mets a jours et  tout ça dans 1 tableau d'objet qui est vide au depart
   const [gpsHistory, setGpsHistory] = useState<GPSPosition[]>([]); // 📍 Historique local
+  const [safeZones, setSafeZones] = useState<SafeZoneStatus[]>([]); // pour les zones safes dans les cards
+
 
   // 🔄 Chargement initial
   useEffect(() => {
@@ -27,6 +36,8 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
   useEffect(() => {
     const interval = setInterval(() => {
       loadGPSData(); // Recharge uniquement les GPS
+      loadSafeZones(); // les zones safes en "temps reel" (use state stock trnsforme et declenche le changement)
+
     }, 10000);
 
     return () => clearInterval(interval);
@@ -53,6 +64,8 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
       
       setChildren(childrenData);
       setGpsPositions(gpsData);
+      setTimeout(() => loadSafeZones(), 500);
+
 
       // 📍 Ajouter au début de l'historique (éviter doublons)
       setGpsHistory(prev => {
@@ -102,12 +115,61 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
     }
   };
 
+  // 🏠 Charger statuts safe zones dans les cards
+const loadSafeZones = async () => {
+  try {
+    const { isAuthenticated } = await import('@/services/auth');
+    const authenticated = await isAuthenticated();
+    
+    if (!authenticated) return;
+
+    // Charger le statut pour chaque enfant
+    const safeZonePromises = children.map(async (child) => {
+      try {
+        const { getToken } = await import('@/services/auth');
+        const token = await getToken();
+        
+        const response = await fetch(
+          `http://192.168.1.30:8000/api/gps/children/${child.id}/in-safe-zone`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            child_id: child.id,
+            in_safe_zone: data.in_safe_zone
+          };
+        }
+      } catch (err) {
+        console.error(`Erreur safe zone enfant ${child.id}:`, err);
+      }
+      
+      return { child_id: child.id, in_safe_zone: false };
+    });
+
+    const safeZoneResults = await Promise.all(safeZonePromises);
+    setSafeZones(safeZoneResults);
+
+  } catch (err: any) {
+    console.error('Erreur refresh safe zones:', err);
+  }
+};
+
   // 📍 Trouver la position GPS la plus récente pour un enfant
   const getCurrentGPSPosition = (childId: number) => { //fct qui prend le N° d el'enfant en param 
     return gpsPositions.find(gps => gps.child_id === childId); //qui return qqch ds le tableau gpsPositions compare les id
   };
-
-  // 🔢 Compter statuts basés sur GPS
+  // 🏠 Trouver le statut safe zone pour un enfant
+  const getSafeZoneStatus = (childId: number) => {
+    return safeZones.find(sz => sz.child_id === childId);
+};
+  // Compter statuts basés sur GPS
   const countStatuses = () => {
     let safe = 0;
     let warning = 0;
@@ -197,6 +259,7 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
         {/* Liste enfants */}
         {children.map(child => {
           const gps = getCurrentGPSPosition(child.id);
+          const safeZone = getSafeZoneStatus(child.id);
           return (
             <ChildCard
               key={child.id}
@@ -205,6 +268,7 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
                 ? `${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}` 
                 : 'GPS indisponible'}              
                 lastUpdate={gps?.last_update}
+                inSafeZone={safeZone?.in_safe_zone} 
             />
           );
         })}
