@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Child } from '@/services/api';
 
@@ -7,10 +7,11 @@ interface ChildCardProps {
   child: Child;
   currentLocation?: string;
   lastUpdate?: string;
+  inSafeZone?: boolean;
   onPress?: () => void;
 }
 
-export default function ChildCard({ child, currentLocation, lastUpdate, onPress }: ChildCardProps) {
+export default function ChildCard({ child, currentLocation, lastUpdate,inSafeZone, onPress }: ChildCardProps) {
   // Calculer "Il y a X min" depuis created_at
   const getTimeAgo = () => {
   if (!lastUpdate) return 'Inconnue';
@@ -40,14 +41,28 @@ export default function ChildCard({ child, currentLocation, lastUpdate, onPress 
     const updated = new Date(lastUpdate);
     const diffMins = Math.floor((now.getTime() - updated.getTime()) / 60000);
     
-    if (diffMins < 65) {
-       return { text: 'Localisée', color: Colors.light.success, icon: '✓' };
-    }
-    if (diffMins < 90) {
-      return { text: 'Attention', color: Colors.light.warning || '#f59e0b', icon: '⚠' };
-    }
+    // Priorité 1 : Zone de confiance (si position récente)
+  if (inSafeZone === true && diffMins < 65) {
+    return { text: 'Zone de confiance', color: Colors.light.success, icon: '🏠' };
+  }
+  
+  // Priorité 2 : Hors zone (si position récente)
+  if (inSafeZone === false && diffMins < 65) {
+    return { text: 'Hors zone', color: '#f59e0b', icon: '⚠️' };
+  }
+
+  // Priorité 3 : Position ancienne → Hors ligne
+  if (diffMins >= 90) {
     return { text: 'Hors ligne', color: '#ef4444', icon: '❌' };
-  };
+  }
+
+  // Fallback : Localisée
+  if (diffMins < 65) {
+    return { text: 'Localisée', color: Colors.light.success, icon: '✓' };
+  }
+
+  return { text: 'Attention', color: '#f59e0b', icon: '⚠️' };
+};
 
   const status = getStatus();
 
@@ -55,7 +70,11 @@ export default function ChildCard({ child, currentLocation, lastUpdate, onPress 
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       {/* Header avec emoji et nom */}
       <View style={styles.header}>
-        <Text style={styles.emoji}>👧</Text>
+        <Image 
+          source={require('@/assets/images/gabbycard.png')} 
+          style={styles.avatarImage}
+          resizeMode="cover"
+        />
         <View style={styles.headerText}>
           <Text style={styles.name}>{child.name}</Text>
           <Text style={styles.age}>
@@ -128,6 +147,13 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: 40,
     marginRight: 12,
+  },
+  avatarImage: {  // ← AJOUTER CE STYLE
+  width: 50,
+  height: 50,
+  borderRadius: 25,  // Rond
+  marginRight: 12,
+  backgroundColor: Colors.light.background, // Fond si image transparente
   },
   headerText: {
     flex: 1,
