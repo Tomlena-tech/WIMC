@@ -8,7 +8,8 @@ type GPSPosition = {
   child_id: number;
   latitude: number;
   longitude: number;
-  timestamp: string;
+  last_update: string;
+  battery?: number;
 };
 export default function ListScreen() { //useState = stocke une donnée dans 1 composant et = Re-render
   const [children, setChildren] = useState<Child[]>([]); // on s'assure que le tableau enfant contient uniquement le objets enfant
@@ -59,7 +60,7 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
           newPos => !prev.some(
             oldPos => 
               oldPos.child_id === newPos.child_id && 
-              oldPos.timestamp === newPos.timestamp
+              oldPos.last_update === newPos.timestamp
           )
         );
         return [...newPositions, ...prev].slice(0, 100); // Garde 100 dernières
@@ -116,14 +117,14 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
     //  regarde gps et decide si il est safe ..
       const gps = getCurrentGPSPosition(child.id);
       
-      if (!gps || !gps.timestamp) {
+      if (!gps || !gps.last_update) {
         unknown++;
         return;
       }
       
       // Calcule du temps ecoulé de la position gps (utile de le mettre sur la card??)
       const diffMins = Math.floor(
-        (new Date().getTime() - new Date(gps.timestamp).getTime()) / 60000
+        (new Date().getTime() - new Date(gps.last_update).getTime()) / 60000
       );
       
       if (diffMins < 5) safe++;
@@ -203,7 +204,7 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
               currentLocation={gps && gps.latitude !== null && gps.longitude !== null 
                 ? `${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}` 
                 : 'GPS indisponible'}              
-                lastUpdate={gps?.timestamp}
+                lastUpdate={gps?.last_update}
             />
           );
         })}

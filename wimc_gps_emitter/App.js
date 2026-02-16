@@ -4,7 +4,7 @@ import * as Location from 'expo-location';
 import * as Battery from 'expo-battery';
 import axios from 'axios';
 
-const API_URL = 'http://10.5.1.110:8000/api/gps'; // ⚠️ REMPLACE PAR TON IP
+const API_URL = "http://10.5.1.110:8000/api/gps";
 const CHILD_ID = 1; // ID de l'enfant test en base
 
 export default function App() {

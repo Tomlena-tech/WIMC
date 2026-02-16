@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import timezone, datetime
 from app.models.child import Child
 from app.schemas.gps import GPSUpdate, GPSResponse
 
@@ -20,7 +20,7 @@ def update_child_gps(
     # Mettre à jour position
     child.last_latitude = gps_data.latitude
     child.last_longitude = gps_data.longitude
-    child.last_update = gps_data.timestamp
+    child.last_update = datetime.now(timezone.utc)
     child.battery = gps_data.battery
     
     db.commit()

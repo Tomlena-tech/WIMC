@@ -13,34 +13,40 @@ interface ChildCardProps {
 export default function ChildCard({ child, currentLocation, lastUpdate, onPress }: ChildCardProps) {
   // Calculer "Il y a X min" depuis created_at
   const getTimeAgo = () => {
-    if (!lastUpdate) return 'Inconnue';
-    
-    const now = new Date();
-    const updated = new Date(lastUpdate);
-    const diffMs = now.getTime() - updated.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return "À l'instant";
-    if (diffMins === 1) return 'Il y a 1 min';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours === 1) return 'Il y a 1h';
-    return `Il y a ${diffHours}h`;
-  };
-
+  if (!lastUpdate) return 'Inconnue';
+  
+  const now = new Date();
+  const updated = new Date(lastUpdate);
+  const diffMs = now.getTime() - updated.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return "À l'instant";
+  if (diffMins === 1) return 'Il y a 1 min';
+  if (diffMins < 60) return `Il y a ${diffMins} min`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours === 1) return 'Il y a 1h';
+  return `Il y a ${diffHours}h`;
+};
   // Statut basé sur dernière mise à jour
   const getStatus = () => {
-    if (!lastUpdate) return { text: 'Inconnu', color: Colors.light.textSecondary };
-    
+    if (!lastUpdate) return { 
+    text: 'Hors ligne', 
+    color: '#ef4444',
+    icon: '❌'
+    };
+
     const now = new Date();
     const updated = new Date(lastUpdate);
     const diffMins = Math.floor((now.getTime() - updated.getTime()) / 60000);
     
-    if (diffMins < 5) {
-      return { text: 'En sécurité', color: Colors.light.success };
+    if (diffMins < 65) {
+       return { text: 'Localisée', color: Colors.light.success, icon: '✓' };
     }
-    return { text: 'Attention', color: Colors.light.warning };
+    if (diffMins < 90) {
+      return { text: 'Attention', color: Colors.light.warning || '#f59e0b', icon: '⚠' };
+    }
+    return { text: 'Hors ligne', color: '#ef4444', icon: '❌' };
   };
 
   const status = getStatus();
@@ -58,7 +64,7 @@ export default function ChildCard({ child, currentLocation, lastUpdate, onPress 
         </View>
         <View style={styles.checkIcon}>
           <Text style={{ fontSize: 20, color: status.color }}>
-            {status.color === Colors.light.success ? '✓' : '⚠'}
+            {status.icon}
           </Text>
         </View>
       </View>
@@ -85,7 +91,15 @@ export default function ChildCard({ child, currentLocation, lastUpdate, onPress 
       {/* Batterie */}
       <View style={styles.batteryRow}>
         <View style={styles.batteryContainer}>
-          <View style={[styles.batteryBar, { width: `${child.battery}%` }]} />
+          <View style={[
+  styles.batteryBar, 
+  { 
+    width: `${child.battery}%`,
+    backgroundColor: child.battery > 50 ? Colors.light.success : 
+                     child.battery > 20 ? '#f59e0b' : 
+                     '#ef4444'
+  }
+]} />
         </View>
         <Text style={styles.batteryText}>{child.battery}%</Text>
       </View>
@@ -177,7 +191,6 @@ const styles = StyleSheet.create({
   },
   batteryBar: {
     height: '100%',
-    backgroundColor: Colors.light.success,
     borderRadius: 4,
   },
   batteryText: {
