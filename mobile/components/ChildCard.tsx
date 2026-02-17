@@ -4,8 +4,8 @@ import { Colors } from '@/constants/Colors';
 import { Child } from '@/services/api';
 
 const childAvatars: { [key: string]: any } = {
-  'Léna': require('@/assets/images/Gabby.png'),
-  'Greg': require('@/assets/images/greg.png'),
+  1: require('@/assets/images/Gabby.png'),
+  2: require('@/assets/images/greg.png'),
   'default': require('@/assets/images/Gabby.png')
 };
 
@@ -77,7 +77,7 @@ export default function ChildCard({ child, currentLocation, lastUpdate,inSafeZon
       {/* Header avec emoji et nom */}
       <View style={styles.header}>
         <Image
-          source={childAvatars[child.name] || childAvatars['default']}
+          source={childAvatars[child.id] || childAvatars['default']}
           style={styles.avatar}
         />
         <View style={styles.headerText}>
