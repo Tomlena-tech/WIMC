@@ -130,7 +130,7 @@ const loadSafeZones = async () => {
         const token = await getToken();
         
         const response = await fetch(
-          `http://192.168.1.30:8000/api/gps/children/${child.id}/in-safe-zone`,
+          `http://10.5.1.110:8000/api/gps/children/${child.id}/in-safe-zone`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
