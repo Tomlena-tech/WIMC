@@ -3,6 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Child } from '@/services/api';
 
+const childAvatars: { [key: string]: any } = {
+  'Léna': require('@/assets/images/Gabby.png'),
+  'Greg': require('@/assets/images/greg.png'),
+  'default': require('@/assets/images/Gabby.png')
+};
+
 interface ChildCardProps {
   child: Child;
   currentLocation?: string;
@@ -70,10 +76,9 @@ export default function ChildCard({ child, currentLocation, lastUpdate,inSafeZon
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       {/* Header avec emoji et nom */}
       <View style={styles.header}>
-        <Image 
-          source={require('@/assets/images/gabbycard.png')} 
-          style={styles.avatarImage}
-          resizeMode="cover"
+        <Image
+          source={childAvatars[child.name] || childAvatars['default']}
+          style={styles.avatar}
         />
         <View style={styles.headerText}>
           <Text style={styles.name}>{child.name}</Text>
@@ -139,6 +144,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
