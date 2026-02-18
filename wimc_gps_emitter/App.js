@@ -4,7 +4,7 @@ import * as Location from 'expo-location';
 import * as Battery from 'expo-battery';
 import axios from 'axios';
 
-const API_URL = "http://10.5.1.110:8000/api/gps";
+const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api/gps`;
 const CHILD_ID = 1; // ID de l'enfant test en base
 
 export default function App() {

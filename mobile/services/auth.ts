@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://10.5.1.110:8000';  // TODO: Mettre ton IP actuelle
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
 // ✅ Stocker les tokens de manière sécurisée
 export const storeTokens = async (accessToken: string, refreshToken: string) => {
