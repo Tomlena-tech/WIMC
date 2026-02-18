@@ -6,10 +6,12 @@ from sqlalchemy.orm import sessionmaker
 
 """ build session for each http request"""
 from app.core.config import settings
-engine = create_engine(settings.DATABASE_URL)  # connection engine
-SessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=engine
-)  # automatic mode off for speed and security
+
+# Fix pour Fly.io qui injecte "postgres://" au lieu de "postgresql://"
+db_url = settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(db_url)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
