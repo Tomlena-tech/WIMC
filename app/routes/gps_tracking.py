@@ -5,7 +5,8 @@ from app.schemas.gps import GPSUpdate, GPSResponse
 from app.core.dependencies import get_current_user
 from app.services.gps_service import (
     update_child_gps,
-    get_child_last_position
+    get_child_last_position,
+    is_child_in_safe_zone
 )
 
 router = APIRouter(prefix="/gps", tags=["gps-tracking"])
@@ -31,17 +32,9 @@ async def get_last_position_endpoint(
 
 
 @router.get("/children/{child_id}/in-safe-zone")
-def check_safe_zone(
+async def check_safe_zone_endpoint(
     child_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """Vérifie si l'enfant est dans une zone de confiance"""
-    from app.services.gps_service import is_child_in_safe_zone
-
-    in_zone = is_child_in_safe_zone(db, child_id)
-
-    return {
-        "child_id": child_id,
-        "in_safe_zone": in_zone
-    }
+    """Vérifie si un enfant est dans une zone de confiance"""
+    return is_child_in_safe_zone(db, child_id)

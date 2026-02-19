@@ -8,6 +8,7 @@ class LocationBase(BaseModel):
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
     description: Optional[str] = None
+    radius: Optional[int] = 200
 
 
 class LocationCreate(LocationBase):
@@ -19,12 +20,14 @@ class LocationUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     description: Optional[str] = None
+    radius: Optional[int] = 200
 
 
 class LocationResponse(LocationBase):
     id: int
     child_id: int
     created_at: datetime
+    radius: Optional[int] = 200
 
     class Config:
         from_attributes = True

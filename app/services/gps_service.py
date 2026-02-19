@@ -3,23 +3,7 @@ from fastapi import HTTPException
 from datetime import timezone, datetime
 from app.models.child import Child
 from app.schemas.gps import GPSUpdate, GPSResponse
-from math import radians, sin, cos, sqrt, atan2
-
-
-def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calcule la distance en mètres entre 2 points GPS (formule Haversine)"""
-    R = 6371000  # Rayon de la Terre en mètres
-
-    lat1_rad = radians(lat1)
-    lat2_rad = radians(lat2)
-    delta_lat = radians(lat2 - lat1)
-    delta_lon = radians(lon2 - lon1)
-
-    a = sin(delta_lat/2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lon/2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1-a))
-
-    return R * c  # Distance en mètres
-
+import math
 
 def update_child_gps(
     db: Session, 
@@ -70,15 +54,29 @@ def get_child_last_position(
     )
 
 
-def is_child_in_safe_zone(db: Session, child_id: int) -> bool:
-    """Vérifie si l'enfant est dans une de ses zones de confiance"""
-    from app.models.location import Location
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calcule la distance en mètres entre deux points GPS (formule Haversine)"""
+    R = 6371000  # Rayon de la Terre en mètres
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi/2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def is_child_in_safe_zone(db: Session, child_id: int) -> dict:
+    """Vérifie si un enfant est dans une zone de confiance"""
 
     child = db.query(Child).filter(Child.id == child_id).first()
-    if not child or not child.last_latitude or not child.last_longitude:
-        return False
+    if not child:
+        raise HTTPException(status_code=404, detail="Child not found")
 
-    # Récupérer toutes les zones de cet enfant
+    if not child.last_latitude or not child.last_longitude:
+        return {"in_safe_zone": False, "zone_name": None}
+
+    from app.models.location import Location
     zones = db.query(Location).filter(Location.child_id == child_id).all()
 
     for zone in zones:
@@ -87,6 +85,6 @@ def is_child_in_safe_zone(db: Session, child_id: int) -> bool:
             zone.latitude, zone.longitude
         )
         if distance <= zone.radius:
-            return True  # Dans la zone !
+            return {"in_safe_zone": True, "zone_name": zone.name}
 
-    return False  # Hors de toutes les zones
+    return {"in_safe_zone": False, "zone_name": None}
