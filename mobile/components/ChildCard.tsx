@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Child } from '@/services/api';
@@ -58,6 +58,23 @@ export default function ChildCard({ child, currentLocation, lastUpdate, onPress 
 
   const status = getStatus();
 
+  const [inSafeZone, setInSafeZone] = useState<boolean | null>(null); // savoir sur la card si l'enfant est en safe zone ou pas 
+
+useEffect(() => {
+  const checkSafeZone = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/gps/children/${child.id}/in-safe-zone`
+      );
+      const data = await response.json();
+      setInSafeZone(data.in_safe_zone);
+    } catch (e) {
+      setInSafeZone(null);
+    }
+  };
+  checkSafeZone();
+}, [child.id, lastUpdate]);
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       {/* Header avec emoji et nom */}
@@ -85,6 +102,18 @@ export default function ChildCard({ child, currentLocation, lastUpdate, onPress 
           {status.text}
         </Text>
       </View>
+
+      {inSafeZone !== null && (
+      <View style={[styles.statusBadge, { 
+        backgroundColor: inSafeZone ? '#22c55e20' : '#f59e0b20' 
+      }]}>
+        <Text style={[styles.statusText, { 
+          color: inSafeZone ? '#22c55e' : '#f59e0b' 
+        }]}>
+          {inSafeZone ? '🏠 Dans la zone' : '⚠️ Hors zone'}
+        </Text>
+      </View>
+)}
 
       {/* Localisation */}
       <View style={styles.infoRow}>

@@ -12,6 +12,7 @@ class Location(Base):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     description = Column(String, nullable=True)
+    radius = Column(Integer, nullable=True, default=200)
     child_id = Column(Integer, ForeignKey("children.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
