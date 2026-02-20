@@ -50,7 +50,7 @@ def verify_token(token: str) -> dict:
                 detail="Invalid token"
             )
 
-        return {"user_id": int(user_id), "email": email}
+        return {"user_id": int(user_id), "email": email, "type":payload.get("type")}
 
     except JWTError:
         raise HTTPException(
