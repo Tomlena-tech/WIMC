@@ -23,3 +23,4 @@ class Child(Base):
     # Relations
     parent = relationship("User", back_populates="children")
     locations = relationship("Location", back_populates="child", cascade="all, delete-orphan")
+    gps_history = relationship("gps_history", back_populates="child", cascade="all, delete-orphan")

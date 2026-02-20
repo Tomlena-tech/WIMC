@@ -4,6 +4,11 @@ from app.core.database import get_db
 from app.routes.auth import router as auth_router
 from app.core.dependencies import get_current_user
 from app.routes import auth, locations, children, gps_tracking
+from app.core.database import Base, engine
+from app.models import User, Child, Location, GPSHistory
+
+# Créer les tables
+Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(

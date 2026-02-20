@@ -3,7 +3,9 @@ from fastapi import HTTPException
 from datetime import timezone, datetime
 from app.models.child import Child
 from app.schemas.gps import GPSUpdate, GPSResponse
+from app.models.gps_history import GPSHistory
 import math
+
 
 def update_child_gps(
     db: Session, 
@@ -26,6 +28,17 @@ def update_child_gps(
     db.commit()
     db.refresh(child)
     
+    # Sauvegarder dans l'historique
+    history_entry = GPSHistory(
+    child_id=child.id,
+    latitude=gps_data.latitude,
+    longitude=gps_data.longitude,
+    battery=gps_data.battery
+    )
+    db.add(history_entry)
+    db.commit()
+
+    
     return GPSResponse(
         child_id=child.id,
         latitude=child.last_latitude,
@@ -33,8 +46,6 @@ def update_child_gps(
         last_update=child.last_update,
         battery=child.battery
     )
-
-
 def get_child_last_position(
     db: Session, 
     child_id: int
