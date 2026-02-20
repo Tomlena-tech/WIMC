@@ -19,32 +19,32 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-    return;
-  }
+    setError("");
+    if (!email || !password) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
 
-  try {
-    setLoading(true);
-    await login(email, password);
-    
-    console.log('✅ Login réussi');
+    try {
+      setLoading(true);
+      await login(email, password);
+      
+      console.log('✅ Login réussi');
 
-    await new Promise(resolve => setTimeout(resolve, 100)); // on attend un peu que le token se stocke bien
+      await new Promise(resolve => setTimeout(resolve, 100)); // on attend un peu que le token se stocke bien
 
-    router.replace('/(tabs)');
-    
-  } catch (error: any) {
-    Alert.alert(
-      'Erreur de connexion',
-      error.response?.data?.detail || 'Email ou mot de passe incorrect'
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      router.replace('/(tabs)');
+      
+    } catch (error: any) {
+      const message = 'Email ou mot de passe incorrect';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -84,6 +84,8 @@ export default function LoginScreen() {
             autoCorrect={false}
             editable={!loading}
           />
+          
+          <Text style={styles.error}>{error}</Text>
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -96,6 +98,7 @@ export default function LoginScreen() {
               <Text style={styles.buttonText}>Se connecter</Text>
             )}
           </TouchableOpacity>
+
         </View>
 
         {/* Info */}
@@ -147,6 +150,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
     backgroundColor: '#f9f9f9',
+    color: "black"
   },
   button: {
     height: 55,
@@ -170,4 +174,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  error: {
+    textAlign: 'center',
+    color: "red",
+  }
 });

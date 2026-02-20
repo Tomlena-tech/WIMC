@@ -58,3 +58,26 @@ def login(
 
     # 4️⃣ Retourner la réponse
     return tokens
+
+
+@router.post("/refresh")
+def refresh_token(
+    refresh_token: str,
+    db: Session = Depends(get_db)
+):
+    """Rafraîchit l'access token avec un refresh token valide"""
+    from app.core.security import verify_token
+    
+    # 1. Vérifier le refresh token
+    payload = verify_token(refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    
+    # 2. Récupérer le user
+    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    # 3. Générer de nouveaux tokens
+    tokens = generate_auth_tokens(user)
+    return tokens

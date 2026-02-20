@@ -6,7 +6,7 @@ import { Image } from 'react-native';
 
 const childAvatars: { [key: string]: any } = {
   1: require('@/assets/images/Gabby.png'),
-  2: require('@/assets/images/greg.png'),
+  2: require('@/assets/images/polochat.png'),
   'default': require('@/assets/images/Gabby.png')
 };
 
