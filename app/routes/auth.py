@@ -80,7 +80,7 @@ def refresh_token_endpoint(
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     # 3. Récupérer le user
-    user = db.query(User).filter(User.id == int(payload["sub"])).first()
+    user = db.query(User).filter(User.id == int(payload["user_id"])).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
