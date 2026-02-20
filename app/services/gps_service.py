@@ -65,6 +65,15 @@ def get_child_last_position(
     )
 
 
+def get_gps_history(db: Session, child_id: int) -> list:
+    from app.models.gps_history import GPSHistory
+    return db.query(GPSHistory)\
+        .filter(GPSHistory.child_id == child_id)\
+        .order_by(GPSHistory.timestamp.desc())\
+        .limit(50)\
+        .all()
+
+
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calcule la distance en mètres entre deux points GPS (formule Haversine)"""
     R = 6371000  # Rayon de la Terre en mètres

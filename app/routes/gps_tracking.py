@@ -37,3 +37,12 @@ async def check_safe_zone_endpoint(
 ):
     """Vérifie si un enfant est dans une zone de confiance"""
     return is_child_in_safe_zone(db, child_id)
+
+
+@router.get("/children/{child_id}/history")
+def get_child_history(
+    child_id: int,
+    db: Session = Depends(get_db)
+):
+    from app.services.gps_service import get_gps_history
+    return get_gps_history(db, child_id)
