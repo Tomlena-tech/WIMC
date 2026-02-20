@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 from datetime import datetime
+from app.models.gps_history import GPSHistory
 
 
 class Child(Base):
