@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
+
 # ============================================
 # USER SCHEMAS (Authentication & Profile)
 # ============================================
@@ -44,3 +45,11 @@ class LoginResponse(BaseModel):
     expires_in: int
     user_id: int
     email: EmailStr
+
+# ============================================
+# REFRESH TOKEN
+# ============================================
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
