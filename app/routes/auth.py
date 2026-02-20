@@ -8,6 +8,7 @@ from app.services.auth_service import (
     generate_auth_tokens,
     create_user
 )
+from app.schemas.auth import RefreshRequest
 from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -61,23 +62,27 @@ def login(
 
 
 @router.post("/refresh")
-def refresh_token(
-    refresh_token: str,
+def refresh_token_endpoint(
+    request: Optional[RefreshRequest] = None,  # Body JSON (mobile)
+    refresh_token: Optional[str] = None,        # Query param (MCP)
     db: Session = Depends(get_db)
 ):
-    """Rafraîchit l'access token avec un refresh token valide"""
+    """Rafraîchit l'access token via body JSON ou query param"""
+    # 1. Extraire le token
+    token = request.refresh_token if request else refresh_token
+    if not token:
+        raise HTTPException(status_code=400, detail="refresh_token required")
+
+    # 2. Vérifier le token
     from app.core.security import verify_token
-    
-    # 1. Vérifier le refresh token
-    payload = verify_token(refresh_token)
+    payload = verify_token(token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
-    
-    # 2. Récupérer le user
+
+    # 3. Récupérer le user
     user = db.query(User).filter(User.id == int(payload["sub"])).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-    
-    # 3. Générer de nouveaux tokens
-    tokens = generate_auth_tokens(user)
-    return tokens
+
+    # 4. Générer nouveaux tokens
+    return generate_auth_tokens(user)
