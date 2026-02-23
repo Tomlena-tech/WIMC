@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View, Text, ActivityIndicator, TouchableOpacity
 import { Colors } from '@/constants/Colors';
 import ChildCard from '@/components/ChildCard';
 import { getChildren, Child, getAllChildrenGPSPositions } from '@/services/api';
+import { useRouter } from 'expo-router';
 
 type GPSPosition = {
   child_id: number;
@@ -11,35 +12,32 @@ type GPSPosition = {
   last_update: string;
   battery?: number;
 };
-export default function ListScreen() { //useState = stocke une donnée dans 1 composant et = Re-render
-  const [children, setChildren] = useState<Child[]>([]); // on s'assure que le tableau enfant contient uniquement le objets enfant
-  const [loading, setLoading] = useState(true); //spinner afin d'eviter de montrer qqch de prématuré
-  const [error, setError] = useState(''); //gestion des erreurs eventuelles
-  const [gpsPositions, setGpsPositions] = useState<GPSPosition[]>([]); //gps contient les pos et set les mets a jours et  tout ça dans 1 tableau d'objet qui est vide au depart
-  const [gpsHistory, setGpsHistory] = useState<GPSPosition[]>([]); // 📍 Historique local
 
-  // 🔄 Chargement initial
+export default function ListScreen() {
+  const router = useRouter();
+  const [children, setChildren] = useState<Child[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [gpsPositions, setGpsPositions] = useState<GPSPosition[]>([]);
+  const [gpsHistory, setGpsHistory] = useState<GPSPosition[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
 
-  // 🔄 Polling automatique toutes les 10 secondes = update la position gps toutes les 10sec (timer)
   useEffect(() => {
     const interval = setInterval(() => {
-      loadGPSData(); // Recharge uniquement les GPS
+      loadGPSData();
     }, 10000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // 📡 Chargement complet (enfants + GPS)
   const loadData = async () => {
     try {
-      setLoading(true); //spinner
-      setError(''); //remts les erreurs a 0
+      setLoading(true);
+      setError('');
 
-      // ✅ Vérifier authentification
-      const { isAuthenticated } = await import('@/services/auth'); // "prends la fonction isAuth qui se trouve dans await import
+      const { isAuthenticated } = await import('@/services/auth');
       const authenticated = await isAuthenticated();
       
       if (!authenticated) {
@@ -47,14 +45,12 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
         return;
       }
 
-      // Charger enfants + GPS
       const childrenData = await getChildren();
       const gpsData = await getAllChildrenGPSPositions();
       
       setChildren(childrenData);
       setGpsPositions(gpsData);
 
-      // 📍 Ajouter au début de l'historique (éviter doublons)
       setGpsHistory(prev => {
         const newPositions = gpsData.filter(
           newPos => !prev.some(
@@ -63,7 +59,7 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
               oldPos.last_update === newPos.timestamp
           )
         );
-        return [...newPositions, ...prev].slice(0, 100); // Garde 100 dernières
+        return [...newPositions, ...prev].slice(0, 100);
       });
 
     } catch (err: any) {
@@ -74,7 +70,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
     }
   };
 
-  // 📡 Recharger uniquement GPS (pour polling)
   const loadGPSData = async () => {
     try {
       const { isAuthenticated } = await import('@/services/auth');
@@ -85,7 +80,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
       const gpsData = await getAllChildrenGPSPositions();
       setGpsPositions(gpsData);
 
-      // 📍 Ajouter au début de l'historique
       setGpsHistory(prev => {
         const newPositions = gpsData.filter(
           newPos => !prev.some(
@@ -102,19 +96,16 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
     }
   };
 
-  // 📍 Trouver la position GPS la plus récente pour un enfant
-  const getCurrentGPSPosition = (childId: number) => { //fct qui prend le N° d el'enfant en param 
-    return gpsPositions.find(gps => gps.child_id === childId); //qui return qqch ds le tableau gpsPositions compare les id
+  const getCurrentGPSPosition = (childId: number) => {
+    return gpsPositions.find(gps => gps.child_id === childId);
   };
 
-  // 🔢 Compter statuts basés sur GPS
   const countStatuses = () => {
     let safe = 0;
     let warning = 0;
     let unknown = 0;
     
-    children.forEach(child => { //ds le tab chidren pour chqs elements
-    //  regarde gps et decide si il est safe ..
+    children.forEach(child => {
       const gps = getCurrentGPSPosition(child.id);
       
       if (!gps || !gps.last_update) {
@@ -122,7 +113,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
         return;
       }
       
-      // Calcule du temps ecoulé de la position gps (utile de le mettre sur la card??)
       const diffMins = Math.floor(
         (new Date().getTime() - new Date(gps.last_update).getTime()) / 60000
       );
@@ -137,7 +127,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
 
   const stats = countStatuses();
 
-  // 🔄 Loading / le HEADER Bleu 
   if (loading) {
     return (
       <View style={styles.container}>
@@ -153,7 +142,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
     );
   }
 
-  // ❌ Erreur
   if (error) {
     return (
       <View style={styles.container}>
@@ -174,7 +162,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
 
   return (
     <View style={styles.container}>
-      {/* Header bleu */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>WIMC</Text>
         <View style={styles.statusDot} />
@@ -182,19 +169,16 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* Titre section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Mes enfants</Text>
           <Text style={styles.sectionSubtitle}>
             {children.length} enfant{children.length > 1 ? 's' : ''} suivi{children.length > 1 ? 's' : ''}
-          </Text> 
-          {/* 📍 Indicateur historique */} 
+          </Text>
           <Text style={styles.historyIndicator}>
             📍 {gpsHistory.length} positions en historique
           </Text>
         </View>
 
-        {/* Liste enfants */}
         {children.map(child => {
           const gps = getCurrentGPSPosition(child.id);
           return (
@@ -204,12 +188,12 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
               currentLocation={gps && gps.latitude !== null && gps.longitude !== null 
                 ? `${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}` 
                 : 'GPS indisponible'}              
-                lastUpdate={gps?.last_update}
+              lastUpdate={gps?.last_update}
+              onPress={() => router.push(`/child-history?id=${child.id}&name=${child.name}`)}
             />
           );
         })}
 
-        {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats.safe}</Text>
@@ -225,7 +209,6 @@ export default function ListScreen() { //useState = stocke une donnée dans 1 co
           </View>
         </View>
 
-        {/* Bouton ajouter enfant (disabled pour MVP) */}
         <TouchableOpacity style={styles.addButton} disabled>
           <Text style={styles.addButtonText}>+ Ajouter un enfant</Text>
         </TouchableOpacity>

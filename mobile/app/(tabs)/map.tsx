@@ -4,6 +4,7 @@ import MapView, { Marker, Circle, PROVIDER_GOOGLE, Polyline } from 'react-native
 import { Colors } from '@/constants/Colors';
 import { getChildren, getPlaces, Child, Location, getAllChildrenGPSPositions } from '@/services/api';
 
+
 type GPSPosition = {
   child_id: number;
   latitude: number;
@@ -19,6 +20,7 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false); // 🔄 Toggle affichage historique
   const mapRef = useRef<MapView>(null);
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
   // 🔄 Chargement initial
   useEffect(() => {
@@ -106,6 +108,24 @@ export default function MapScreen() {
       setLoading(false);
     }
   };
+  const loadHistory = async (childrenList: Child[]) => {
+  try {
+    const { getAccessToken } = await import('@/services/auth');
+    const token = await getAccessToken();
+    const results = await Promise.all(
+      childrenList.map(child =>
+        fetch(`${API_URL}/api/gps/children/${child.id}/history`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(r => r.json())
+      )
+    );
+    setGpsHistory(results.flat());
+  } catch (err) {
+    console.error('Erreur historique:', err);
+  }
+};
+
+
 
   // 📍 Trouver la position GPS actuelle d'un enfant
   const getCurrentGPSPosition = (childId: number) => {
@@ -311,7 +331,7 @@ export default function MapScreen() {
         style={styles.centerButton}
         onPress={() => {
           const firstGPS = gpsPositions.find(gps => gps.latitude !== null);
-          if (firstGPS) {
+          if (firstGPS)   {
             mapRef.current?.animateToRegion({
               latitude: firstGPS.latitude,
               longitude: firstGPS.longitude,
@@ -327,7 +347,12 @@ export default function MapScreen() {
       {/* 🔄 Toggle historique */}
       <TouchableOpacity
         style={[styles.historyButton, showHistory && styles.historyButtonActive]}
-        onPress={() => setShowHistory(!showHistory)}
+        onPress={() => {
+          if (!showHistory && gpsHistory.length === 0) {
+            loadHistory(children);
+          }
+          setShowHistory(!showHistory);
+        }}
       >
         <Text style={styles.centerButtonText}>
           {showHistory ? '🔵' : '⚪'}
