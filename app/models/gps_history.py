@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.core.database import Base
 
+
 class GPSHistory(Base):
     __tablename__="gps_history"
     

@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, TouchableOpacity, Alert, TextInput } from 'reac
 import * as Location from 'expo-location';
 import * as Battery from 'expo-battery';
 import axios from 'axios';
+import { useKeepAwake } from 'expo-keep-awake';
+
 
 const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api/gps`;
 
@@ -12,6 +14,7 @@ export default function App() {
   const [intervalId, setIntervalId] = useState(null);
   const [childId, setChildId] = useState(null);
   const [inputId, setInputId] = useState('');
+  useKeepAwake();
 
   useEffect(() => {
     (async () => {
@@ -142,3 +145,4 @@ const styles = StyleSheet.create({
   buttonText: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   status: { fontSize: 16, color: '#aaa' },
 });
+
