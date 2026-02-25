@@ -40,6 +40,12 @@ def get_place(location_id: int) -> dict:
     return tools.get_place(location_id)
 
 
+@mcp.tool()
+def get_last_position(child_id: int) -> dict:
+    """Récupérer la dernière position GPS d'un enfant"""
+    return tools.get_last_position(child_id)
+
+
 if __name__ == "__main__":
     print("🚀 Démarrage serveur MCP WIMC...")
     mcp.run()

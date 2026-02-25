@@ -117,3 +117,33 @@ class WIMCTools:
             return {"success": False, "error": "Impossible de se connecter au serveur WIMC"}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def get_last_position(self, child_id: int) -> Dict[str, Any]:
+        """Récupère la dernière position GPS d'un enfant"""
+        if not self.token:
+            return {"success": False, "error": "Non authentifié - utilise d'abord login()"}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/gps/children/{child_id}/history",
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+
+            if response.status_code == 401:
+                return {"success": False, "error": "Token expiré ou invalide"}
+            if response.status_code == 404:
+                return {"success": False, "error": f"Enfant {child_id} non trouvé"}
+            if response.status_code != 200:
+                return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+
+            data = response.json()
+            if not data:
+                return {"success": False, "error": "Aucune position GPS disponible"}
+
+            last = data[0]  # Le plus récent en premier
+            return {"success": True, "data": last}
+
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "error": "Impossible de se connecter au serveur WIMC"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}

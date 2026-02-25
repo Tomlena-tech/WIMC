@@ -21,6 +21,8 @@ export default function MapScreen() {
   const [showHistory, setShowHistory] = useState(false); // 🔄 Toggle affichage historique
   const mapRef = useRef<MapView>(null);
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
+  const hasInitializedMap = useRef(false);
+
 
   // 🔄 Chargement initial
   useEffect(() => {
@@ -59,7 +61,8 @@ export default function MapScreen() {
 
   // 🎯 Centrer sur position de Léna si GPS disponible
   useEffect(() => {
-    if (gpsPositions.length > 0 && !loading) {
+    if (gpsPositions.length > 0 && !loading && !hasInitializedMap.current) {
+      hasInitializedMap.current = true;
       const firstChildGPS = gpsPositions.find(gps => gps.latitude !== null);
       if (firstChildGPS) {
         setTimeout(() => {
@@ -112,6 +115,8 @@ export default function MapScreen() {
   try {
     const { getAccessToken } = await import('@/services/auth');
     const token = await getAccessToken();
+    console.log('🔵 loadHistory appelée, children:', childrenList.length);
+    console.log('🔵 URL:', `${API_URL}/api/gps/children/${childrenList[0]?.id}/history`);
     const results = await Promise.all(
       childrenList.map(child =>
         fetch(`${API_URL}/api/gps/children/${child.id}/history`, {
@@ -131,6 +136,13 @@ export default function MapScreen() {
   const getCurrentGPSPosition = (childId: number) => {
     return gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
   };
+  const getChildImage = (childId: number) => {
+  switch(childId) {
+    case 1: return require('@/assets/images/Gabby-Dollhouse-Transparent.png');
+    case 2: return require('@/assets/images/greg.png');
+    default: return require('@/assets/images/Gabby.png');
+  }
+};
 
   // 🏠 Trouver les zones de confiance d'un enfant (uniquement locations, pas GPS)
   const getSafeZones = (childId: number) => {
@@ -242,7 +254,7 @@ export default function MapScreen() {
                       latitude: zone.latitude,
                       longitude: zone.longitude,
                     }}
-                    radius={200}
+                    radius={100}
                     fillColor="rgba(76, 175, 80, 0.2)"
                     strokeColor={Colors.light.success}
                     strokeWidth={2}
@@ -300,24 +312,12 @@ export default function MapScreen() {
                 longitude: currentPosition.longitude,
               }}
               title={child.name}
-              description={`GPS - ${new Date(currentPosition.timestamp).toLocaleString('fr-FR')}`}
+              description={`GPS - ${new Date(currentPosition.last_update).toLocaleString('fr-FR')}`}
               anchor={{ x: 0.5, y: 0.5 }}
             >
               <View style={{ alignItems: "center", justifyContent: "center" }}>
-                {/* HALO rouge si hors zone */}
-                {!isSafe && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      width: 60,
-                      height: 60,
-                      borderRadius: 30,
-                      backgroundColor: "rgba(255,0,0,0.25)",
-                    }}
-                  />
-                )}
                 <Image
-                  source={require('@/assets/images/Gabby.png')}
+                  source={getChildImage(child.id)}
                   style={{ width: 40, height: 40 }}
                 />
               </View>
@@ -348,6 +348,7 @@ export default function MapScreen() {
       <TouchableOpacity
         style={[styles.historyButton, showHistory && styles.historyButtonActive]}
         onPress={() => {
+            console.log('🔵 Bouton cliqué, children:', children.length, 'showHistory:', showHistory);
           if (!showHistory) {
             loadHistory(children);
           }
