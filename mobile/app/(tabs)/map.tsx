@@ -139,7 +139,7 @@ export default function MapScreen() {
 
   // ✅ Vérifier si position GPS est dans une zone sûre
   const isInSafeZone = (gpsPosition: GPSPosition, safeZones: Location[]) => {
-    const SAFE_RADIUS_KM = 0.2; // 200 mètres
+    const SAFE_RADIUS_KM = 0.1; // 100 mètres
 
     for (const zone of safeZones) {
       const distance = getDistanceKm(
@@ -348,7 +348,7 @@ export default function MapScreen() {
       <TouchableOpacity
         style={[styles.historyButton, showHistory && styles.historyButtonActive]}
         onPress={() => {
-          if (!showHistory && gpsHistory.length === 0) {
+          if (!showHistory) {
             loadHistory(children);
           }
           setShowHistory(!showHistory);

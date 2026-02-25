@@ -122,7 +122,7 @@ export default function ListScreen() {
       else unknown++;
     });
     
-    return { safe, warning, unknown, total: children.length };
+    return { safe, warning, unknown, total: children.length }; // c'est ce code qui genere si 1 ou 2 enfants sont ou est en sécurité
   };
 
   const stats = countStatuses();
@@ -173,9 +173,6 @@ export default function ListScreen() {
           <Text style={styles.sectionTitle}>Mes enfants</Text>
           <Text style={styles.sectionSubtitle}>
             {children.length} enfant{children.length > 1 ? 's' : ''} suivi{children.length > 1 ? 's' : ''}
-          </Text>
-          <Text style={styles.historyIndicator}>
-            📍 {gpsHistory.length} positions en historique
           </Text>
         </View>
 

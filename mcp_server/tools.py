@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 class WIMCTools:
     """Outils pour interagir avec l'API WIMC"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "https://wimc-backup.fly.dev"):
         self.base_url = base_url
         self.token: Optional[str] = None
     
