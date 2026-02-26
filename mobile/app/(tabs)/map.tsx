@@ -240,6 +240,7 @@ export default function MapScreen() {
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
+        mapType="hybrid" 
         initialRegion={{
           latitude: firstGPS?.latitude || 44.8566,
           longitude: firstGPS?.longitude || -0.5522,
@@ -289,7 +290,7 @@ export default function MapScreen() {
           if (history.length < 2) return null;
 
           return (
-            <Polyline
+            <Polyline /* le super tracé bleu qui ne va pas bien */
               key={`history-${child.id}`}
               coordinates={history.map(gps => ({
                 latitude: gps.latitude,

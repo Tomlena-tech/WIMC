@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from typing import Optional
+from datetime import date
 from app.core.database import get_db
 from app.schemas.gps import GPSUpdate, GPSResponse
 from app.services.gps_service import (
     update_child_gps,
     get_child_last_position,
-    is_child_in_safe_zone
+    is_child_in_safe_zone,
+    get_gps_history,
+    get_history_days,
+    snap_to_roads
 )
 
 router = APIRouter(prefix="/gps", tags=["gps-tracking"])
@@ -39,10 +44,30 @@ async def check_safe_zone_endpoint(
     return is_child_in_safe_zone(db, child_id)
 
 
-@router.get("/children/{child_id}/history")
-def get_child_history(
+@router.get("/children/{child_id}/history/days")
+def get_history_days_endpoint(
     child_id: int,
     db: Session = Depends(get_db)
 ):
-    from app.services.gps_service import get_gps_history
-    return get_gps_history(db, child_id)
+    """Retourne la liste des jours avec des données GPS"""
+    return get_history_days(db, child_id)
+
+
+@router.get("/children/{child_id}/history")
+async def get_child_history(
+    child_id: int,
+    day: Optional[date] = Query(default=None),
+    interval_seconds: int = Query(default=30),
+    snap: bool = Query(default=False),
+    db: Session = Depends(get_db)
+):
+    """Historique GPS d'un enfant, avec snap-to-roads optionnel"""
+    points = get_gps_history(db, child_id, day, interval_seconds)
+    
+    if snap and points:
+        return await snap_to_roads(points)
+    
+    return [
+        {"latitude": p.latitude, "longitude": p.longitude, "timestamp": p.timestamp}
+        for p in points
+    ]
