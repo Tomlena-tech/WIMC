@@ -134,7 +134,13 @@ export default function MapScreen() {
 
   // 📍 Trouver la position GPS actuelle d'un enfant
   const getCurrentGPSPosition = (childId: number) => {
-    return gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
+    const pos = gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
+    if (!pos) return null;
+    
+    const diffMins = (new Date().getTime() - new Date(pos.last_update).getTime()) / 60000;
+    if (diffMins > 1440) return null; // Position trop ancienne
+    
+    return pos;
   };
   const getChildImage = (childId: number) => {
   switch(childId) {
@@ -161,7 +167,7 @@ export default function MapScreen() {
         zone.longitude
       );
 
-      if (distance <= SAFE_RADIUS_KM) return true;
+      if (distance <= zone.radius / 1000) return true;
     }
 
     return false;
@@ -254,7 +260,7 @@ export default function MapScreen() {
                       latitude: zone.latitude,
                       longitude: zone.longitude,
                     }}
-                    radius={100}
+                    radius={zone.radius}
                     fillColor="rgba(76, 175, 80, 0.2)"
                     strokeColor={Colors.light.success}
                     strokeWidth={2}
@@ -312,7 +318,7 @@ export default function MapScreen() {
                 longitude: currentPosition.longitude,
               }}
               title={child.name}
-              description={`GPS - ${new Date(currentPosition.last_update).toLocaleString('fr-FR')}`}
+              description={`GPS - ${new Date(currentPosition.last_update + '+00:00').toLocaleString('fr-FR', {timeZone: 'Europe/Paris'})}`}
               anchor={{ x: 0.5, y: 0.5 }}
             >
               <View style={{ alignItems: "center", justifyContent: "center" }}>

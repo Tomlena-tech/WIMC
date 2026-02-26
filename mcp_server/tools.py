@@ -125,7 +125,7 @@ class WIMCTools:
 
         try:
             response = requests.get(
-                f"{self.base_url}/api/gps/children/{child_id}/history",
+                f"{self.base_url}/api/gps/children/${child_id}/last-position",
                 headers={"Authorization": f"Bearer {self.token}"}
             )
 
