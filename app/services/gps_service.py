@@ -5,6 +5,8 @@ from typing import Optional
 from app.models.child import Child
 from app.schemas.gps import GPSUpdate, GPSResponse
 from app.models.gps_history import GPSHistory
+from sqlalchemy import func
+
 import math
 import httpx
 import os
@@ -14,7 +16,6 @@ def update_child_gps(
     db: Session, 
     child_id: int, 
     gps_data: GPSUpdate,
-    timestamp=datetime.now(timezone.utc),
 ) -> GPSResponse:
     """Mettre à jour la position GPS d'un enfant"""
     
@@ -68,18 +69,17 @@ def get_child_last_position(
 
 
 def get_history_days(db: Session, child_id: int) -> list:
-    """Retourne la liste des jours avec des données GPS pour un enfant"""
-    from sqlalchemy import cast
-    from sqlalchemy.types import Date
-    
+    print("🔥 VERSION TEST 123")
     rows = db.query(
-        cast(GPSHistory.timestamp, Date).label("day")
+        func.date(GPSHistory.timestamp).label("day")
     ).filter(
         GPSHistory.child_id == child_id
-    ).distinct().order_by(
-        cast(GPSHistory.timestamp, Date).desc()
-    ).limit(30).all()
-    
+    ).group_by(
+        func.date(GPSHistory.timestamp)
+    ).order_by(
+        func.date(GPSHistory.timestamp).desc()
+    ).all()
+
     return [str(row.day) for row in rows]
 
 
