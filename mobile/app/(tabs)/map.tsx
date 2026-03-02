@@ -183,7 +183,7 @@ export default function MapScreen() {
   const getCurrentGPSPosition = (childId: number) => {
     const pos = gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
     if (!pos) return null;
-    const diffMins = (new Date().getTime() - new Date((pos.last_update ?? pos.timestamp) + '+00:00').getTime()) / 60000;
+    const diffMins = (new Date().getTime() - new Date((pos.last_update ?? pos.timestamp)).getTime()) / 60000;
     if (diffMins > 1440) return null;
     return pos;
   };

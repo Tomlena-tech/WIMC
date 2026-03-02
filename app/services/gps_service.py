@@ -13,7 +13,8 @@ import os
 def update_child_gps(
     db: Session, 
     child_id: int, 
-    gps_data: GPSUpdate
+    gps_data: GPSUpdate,
+    timestamp=datetime.now(timezone.utc),
 ) -> GPSResponse:
     """Mettre à jour la position GPS d'un enfant"""
     
@@ -82,13 +83,13 @@ def get_history_days(db: Session, child_id: int) -> list:
     return [str(row.day) for row in rows]
 
 
-def get_gps_history(
+def get_gps_history( 
     db: Session,
     child_id: int,
     day: Optional[date] = None,
     interval_seconds: int = 30
 ) -> list:
-    """Historique GPS d'un enfant pour un jour donné, sous-échantillonné"""
+    """Prends 1 coordonnées gps toutes les 30sec sur le jour choisi. Historique GPS d'un enfant pour un jour donné, sous-échantillonné"""
     
     target_day = day or date.today()
     start = datetime(target_day.year, target_day.month, target_day.day, tzinfo=timezone.utc)

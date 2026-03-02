@@ -2,63 +2,72 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert, TextInput } from 'react-native';
 import * as Location from 'expo-location';
 import * as Battery from 'expo-battery';
+import * as TaskManager from 'expo-task-manager';
 import axios from 'axios';
 import { useKeepAwake } from 'expo-keep-awake';
 
-
+let GLOBAL_CHILD_ID = null;
 const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api/gps`;
+const LOCATION_TASK_NAME = 'background-location-task';
+
+TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
+  if (error) {
+    console.error('❌ Background task error:', error);
+    return;
+  }
+  if (data) {
+    const { locations } = data;
+    const coords = locations[0].coords;
+    try {
+      const batteryLevel = await Battery.getBatteryLevelAsync();
+      const batteryPercent = Math.round(batteryLevel * 100);
+      const childId = GLOBAL_CHILD_ID;
+      if (!childId) return;
+      await axios.post(`${API_URL}/children/${childId}/update`, {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        timestamp: new Date().toISOString(),
+        battery: batteryPercent
+      });
+      console.log('✅ Background position envoyée');
+    } catch (err) {
+      console.error('❌ Erreur envoi background:', err.message);
+    }
+  }
+});
 
 export default function App() {
   const [isTracking, setIsTracking] = useState(false);
   const [location, setLocation] = useState(null);
-  const [intervalId, setIntervalId] = useState(null);
   const [childId, setChildId] = useState(null);
   const [inputId, setInputId] = useState('');
   useKeepAwake();
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'GPS nécessaire pour fonctionner');
+      const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+      if (fgStatus !== 'granted') {
+        Alert.alert('Permission refusée', 'GPS nécessaire');
+        return;
+      }
+      const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+      if (bgStatus !== 'granted') {
+        Alert.alert('Permission arrière-plan refusée', 'Active le GPS "Toujours" dans les réglages');
       }
     })();
   }, []);
 
-  const sendLocation = async (coords) => {
-    try {
-      const batteryLevel = await Battery.getBatteryLevelAsync();
-      const batteryPercent = Math.round(batteryLevel * 100);
-      const response = await axios.post(
-        `${API_URL}/children/${childId}/update`,
-        {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          timestamp: new Date().toISOString(),
-          battery: batteryPercent
-        }
-      );
-      console.log('✅ Position envoyée:', response.data);
-      setLocation(coords);
-    } catch (error) {
-      console.error('❌ Erreur envoi:', error.message);
-      Alert.alert('Erreur', 'Impossible d\'envoyer la position');
-    }
-  };
-
   const startTracking = async () => {
     try {
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High
+      GLOBAL_CHILD_ID = String(childId);
+      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 10000,
+        distanceInterval: 0,
+        pausesUpdatesAutomatically: false,
+        activityType: Location.ActivityType.Other,
+        showsBackgroundLocationIndicator: true,
       });
-      await sendLocation(currentLocation.coords);
-      const id = setInterval(async () => {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High
-        });
-        await sendLocation(loc.coords);
-      }, 10000);
-      setIntervalId(id);
       setIsTracking(true);
       Alert.alert('Démarré', 'Émission GPS active 📡');
     } catch (error) {
@@ -66,16 +75,17 @@ export default function App() {
     }
   };
 
-  const stopTracking = () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-      setIntervalId(null);
+  const stopTracking = async () => {
+    try {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
       setIsTracking(false);
       Alert.alert('Arrêté', 'Émission GPS stoppée');
+    } catch (error) {
+      console.error('Erreur stop:', error);
+      setIsTracking(false);
     }
   };
 
-  // Écran de sélection child_id
   if (!childId) {
     return (
       <View style={styles.container}>
@@ -145,4 +155,3 @@ const styles = StyleSheet.create({
   buttonText: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   status: { fontSize: 16, color: '#aaa' },
 });
-

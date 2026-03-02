@@ -29,13 +29,15 @@
       ]
     },
     "ios": {
-      "bundleIdentifier": "com.wimc.app",
+      "bundleIdentifier": "com.thomasdecourt.wimcgpsemitter",
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyAIy-E26PEXJaxeHVFf5VJTlMEI-HZMcpU"
       },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "UIBackgroundModes": ["location"],
+        "NSLocationWhenInUseUsageDescription": "WIMC utilise votre position pour le suivi en temps réel",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "WIMC utilise votre position en arrière-plan pour le suivi"
       }
     },
     "plugins": [
