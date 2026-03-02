@@ -52,13 +52,19 @@ export default function MapScreen() {
               oldPos => oldPos.child_id === newPos.child_id && oldPos.timestamp === newPos.timestamp
             )
           );
-          return [...newPositions, ...prev].slice(0, 100);
+          return [...newPositions, ...prev].slice(0, 20);
         });
       } catch (err) {
         console.error('Erreur refresh GPS:', err);
       }
     }, 10000);
     return () => clearInterval(interval);
+  }, [children]);
+
+  useEffect(() => {
+    if (children.length > 0) {
+      loadAvailableDays(1);
+    }
   }, [children]);
 
   // 🎯 Centrer carte au premier chargement
@@ -101,7 +107,7 @@ export default function MapScreen() {
       setGpsHistory(gpsData);
 
       if (childrenData.length > 0) {
-        await loadAvailableDays(childrenData[0].id);
+        await loadAvailableDays(1);
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
@@ -119,6 +125,7 @@ export default function MapScreen() {
         headers: { Authorization: `Bearer ${token}` }
       });
       const days = await res.json();
+      console.log('📅 days reçus:', days);
       setAvailableDays(days);
     } catch (err) {
       console.error('Erreur chargement jours:', err);
@@ -183,7 +190,7 @@ export default function MapScreen() {
   const getCurrentGPSPosition = (childId: number) => {
     const pos = gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
     if (!pos) return null;
-    const diffMins = (new Date().getTime() - new Date((pos.last_update ?? pos.timestamp)).getTime()) / 60000;
+    const diffMins = (new Date().getTime() - new Date((pos.last_update ?? pos.timestamp)+ '+00:00').getTime()) / 60000;
     if (diffMins > 1440) return null;
     return pos;
   };

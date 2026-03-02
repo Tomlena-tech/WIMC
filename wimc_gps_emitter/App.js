@@ -7,6 +7,8 @@ import axios from 'axios';
 import { useKeepAwake } from 'expo-keep-awake';
 
 let GLOBAL_CHILD_ID = null;
+let GLOBAL_LAST_LOCATION = null;
+
 const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api/gps`;
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -29,6 +31,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
         timestamp: new Date().toISOString(),
         battery: batteryPercent
       });
+      GLOBAL_LAST_LOCATION = { latitude: coords.latitude, longitude: coords.longitude };
       console.log('✅ Background position envoyée');
     } catch (err) {
       console.error('❌ Erreur envoi background:', err.message);
@@ -57,15 +60,25 @@ export default function App() {
     })();
   }, []);
 
+  // 🔄 Lire GLOBAL_LAST_LOCATION toutes les 5 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (GLOBAL_LAST_LOCATION) {
+        setLocation(GLOBAL_LAST_LOCATION);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const startTracking = async () => {
     try {
       GLOBAL_CHILD_ID = String(childId);
-      
+
       const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
       if (hasStarted) {
         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
       }
-      
+
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.High,
         timeInterval: 10000,
@@ -154,7 +167,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 18, color: '#aaa', marginBottom: 40 },
   input: { backgroundColor: '#16213e', color: '#fff', padding: 15, borderRadius: 10, width: '80%', fontSize: 20, textAlign: 'center', marginBottom: 20 },
   locationBox: { backgroundColor: '#16213e', padding: 20, borderRadius: 10, marginBottom: 30, width: '100%' },
-  locationText: { color: '#0f4c75', fontSize: 16, fontFamily: 'monospace' },
+  locationText: { color: '#00d9ff', fontSize: 16, fontFamily: 'monospace' },
   button: { paddingVertical: 20, paddingHorizontal: 60, borderRadius: 50, marginBottom: 20 },
   startButton: { backgroundColor: '#00d9ff' },
   stopButton: { backgroundColor: '#ff6b6b' },
