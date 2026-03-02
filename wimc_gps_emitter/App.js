@@ -60,6 +60,12 @@ export default function App() {
   const startTracking = async () => {
     try {
       GLOBAL_CHILD_ID = String(childId);
+      
+      const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+      if (hasStarted) {
+        await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      }
+      
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.High,
         timeInterval: 10000,

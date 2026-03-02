@@ -140,7 +140,7 @@ export default function MapScreen() {
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const points = await res.json();
-          results[child.id] = points;
+          results[child.id] = points.slice(0,200);
         })
       );
       setHistoryPoints(results);
@@ -223,7 +223,8 @@ export default function MapScreen() {
   };
 
   const formatDay = (day: string) => {
-    const d = new Date(day);
+    const [y,m,dd] = day.split("-").map(Number);
+    const d = new Date(y, m-1, dd);
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);

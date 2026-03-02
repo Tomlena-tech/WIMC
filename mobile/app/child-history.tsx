@@ -56,7 +56,7 @@ export default function ChildHistory() {
       ) : (
         <FlatList
           data={history}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => index.toString()}
           renderItem={({ item, index }) => (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>📍 Position {history.length - index}</Text>

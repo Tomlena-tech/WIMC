@@ -99,7 +99,7 @@ export const getPlace = async (locationId: number): Promise<Location> => {
 };
 // 🆕 GPS Temps Réel
 export const getChildGPSPosition = async (childId: number) => {
-  const response = await axios.get(`${API_BASE_URL}/api/gps/children/${childId}/last-position`);
+  const response = await axios.get(`${API_BASE_URL}/api/gps/children/${childId}/last-position?t=${Date.now()}`);
   return response.data;
 };
 
