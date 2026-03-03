@@ -19,6 +19,7 @@ class WIMCTools:
                 return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
 
             data = response.json()
+            print("REPONSE API:", data)
             self.token = data.get("access_token")
             return {"success": True, "token": self.token}
         except requests.exceptions.ConnectionError:
@@ -125,7 +126,7 @@ class WIMCTools:
 
         try:
             response = requests.get(
-                f"{self.base_url}/api/gps/children/${child_id}/last-position",
+                f"{self.base_url}/api/gps/children/{child_id}/last-position",
                 headers={"Authorization": f"Bearer {self.token}"}
             )
 
@@ -140,7 +141,7 @@ class WIMCTools:
             if not data:
                 return {"success": False, "error": "Aucune position GPS disponible"}
 
-            last = data[0]  # Le plus récent en premier
+            last = data if isinstance(data, dict) else data[0]
             return {"success": True, "data": last}
 
         except requests.exceptions.ConnectionError:
