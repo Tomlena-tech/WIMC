@@ -45,7 +45,7 @@ export default function RootLayout() {
       if (!authenticated && inAuthGroup) {
         console.log('➡️ → Login');
         router.replace('/login');
-      } else if (authenticated && !inAuthGroup && segments[0] !== 'login' && segments[0] !== 'child-history') {
+      } else if (authenticated && !inAuthGroup && segments[0] !== 'login' && segments[0] !== 'child-history' && segments[0] !== 'add-child') {
         console.log('➡️ → App');
         router.replace('/(tabs)');
       }
@@ -65,6 +65,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="child-history" options={{ headerShown: false }} />
+        <Stack.Screen name="add-child" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

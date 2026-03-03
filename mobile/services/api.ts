@@ -102,6 +102,10 @@ export const getChildGPSPosition = async (childId: number) => {
   const response = await axios.get(`${API_BASE_URL}/api/gps/children/${childId}/last-position?t=${Date.now()}`);
   return response.data;
 };
+export const createChild = async (name : string) => {
+  const response = await axios.post(`${API_BASE_URL}/children/`, { name });
+  return response.data;
+};
 
 export const getAllChildrenGPSPositions = async () => {
   const children = await getChildren();

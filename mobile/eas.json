@@ -9,7 +9,11 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://wimc-backup.fly.dev",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyA7gc1IHKT5N6rPi7jNw1nW4yYxedLWLEU"
+      }
     },
     "production": {
       "autoIncrement": true

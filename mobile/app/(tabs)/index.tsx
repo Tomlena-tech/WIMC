@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import ChildCard from '@/components/ChildCard';
 import { getChildren, Child, getAllChildrenGPSPositions } from '@/services/api';
@@ -191,23 +191,13 @@ export default function ListScreen() {
           );
         })}
 
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{stats.safe}</Text>
-            <Text style={[styles.statLabel, { color: Colors.light.success }]}>Récent</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{stats.warning}</Text>
-            <Text style={[styles.statLabel, { color: Colors.light.warning }]}>Ancien</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{stats.unknown}</Text>
-            <Text style={[styles.statLabel, { color: Colors.light.textSecondary }]}>Inconnu</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.addButton} disabled>
-          <Text style={styles.addButtonText}>+ Ajouter un enfant</Text>
+        <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-child')}>
+          <Image 
+            source={require('@/assets/images/pandypat.png')}
+            style={styles.addButtonImage}
+          />
+          <Text style={styles.addButtonText}>Ajouter un enfant</Text>
+          <Text style={styles.addButtonSub}>Nouveau suivi GPS</Text>
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />
@@ -299,16 +289,31 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: Colors.light.primary,
     marginHorizontal: 16,
-    marginVertical: 16,
-    padding: 16,
-    borderRadius: 12,
+    marginVertical: 26,
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
-    opacity: 0.5,
+    alignItems: 'center',
+    opacity: 1,
+  },
+  addButtonIcon: {
+    fontSize: 36,
+    marginBottom: 6,
+  },
+  addButtonImage: {
+    width: 50,
+    height: 50,
+    marginBottom: 12,
   },
   addButtonText: {
     color: Colors.light.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  addButtonSub: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    marginTop: 4,
   },
   centered: {
     flex: 1,
