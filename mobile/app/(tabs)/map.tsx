@@ -346,7 +346,7 @@ export default function MapScreen() {
       <TouchableOpacity
         style={styles.centerButton}
         onPress={() => {
-          const pos = gpsPositions.find(gps => gps.latitude !== null);
+          const pos = gpsPositions.find(gps => gps.child_id === 1 && gps.latitude !== null);
           if (pos) {
             mapRef.current?.animateToRegion({
               latitude: pos.latitude,
