@@ -30,6 +30,14 @@ export default function MapScreen() {
   const [historyPoints, setHistoryPoints] = useState<{ [childId: number]: HistoryPoint[] }>({});
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // ✅ FIX : state contrôlé pour la région de la carte
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 44.8566,
+    longitude: -0.5522,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
+
   const mapRef = useRef<MapView>(null);
   const hasInitializedMap = useRef(false);
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -67,20 +75,18 @@ export default function MapScreen() {
     }
   }, [children]);
 
-  // 🎯 Centrer carte au premier chargement
+  // ✅ FIX : Centrer carte au premier chargement via setMapRegion (pas animateToRegion)
   useEffect(() => {
     if (gpsPositions.length > 0 && !loading && !hasInitializedMap.current) {
       hasInitializedMap.current = true;
       const firstChildGPS = gpsPositions.find(gps => gps.latitude !== null);
       if (firstChildGPS) {
-        setTimeout(() => {
-          mapRef.current?.animateToRegion({
-            latitude: firstChildGPS.latitude,
-            longitude: firstChildGPS.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }, 1000);
-        }, 500);
+        setMapRegion({
+          latitude: firstChildGPS.latitude,
+          longitude: firstChildGPS.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
       }
     }
   }, [gpsPositions, loading]);
@@ -147,7 +153,7 @@ export default function MapScreen() {
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const points = await res.json();
-          results[child.id] = points.slice(0,200);
+          results[child.id] = points.slice(0, 200);
         })
       );
       setHistoryPoints(results);
@@ -190,7 +196,7 @@ export default function MapScreen() {
   const getCurrentGPSPosition = (childId: number) => {
     const pos = gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
     if (!pos) return null;
-    const diffMins = (new Date().getTime() - new Date((pos.last_update ?? pos.timestamp)+ '+00:00').getTime()) / 60000;
+    const diffMins = (new Date().getTime() - new Date((pos.last_update ?? pos.timestamp) + '+00:00').getTime()) / 60000;
     if (diffMins > 1440) return null;
     return pos;
   };
@@ -230,8 +236,8 @@ export default function MapScreen() {
   };
 
   const formatDay = (day: string) => {
-    const [y,m,dd] = day.split("-").map(Number);
-    const d = new Date(y, m-1, dd);
+    const [y, m, dd] = day.split("-").map(Number);
+    const d = new Date(y, m - 1, dd);
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -241,7 +247,6 @@ export default function MapScreen() {
   };
 
   const safeCount = countSafe();
-  const firstGPS = gpsPositions.find(gps => gps.latitude !== null);
 
   if (loading) {
     return (
@@ -267,18 +272,14 @@ export default function MapScreen() {
         </Text>
       </View>
 
-      {/* Carte */}
+      {/* ✅ FIX : region (contrôlée) + onRegionChangeComplete pour laisser l'user scroller librement */}
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         mapType="hybrid"
-        initialRegion={{
-          latitude: firstGPS?.latitude || 44.8566,
-          longitude: firstGPS?.longitude || -0.5522,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
+        region={mapRegion}
+        onRegionChangeComplete={setMapRegion}
       >
         {/* Zones de confiance */}
         {children.map((child) => (
