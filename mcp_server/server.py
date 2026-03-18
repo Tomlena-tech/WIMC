@@ -1,3 +1,4 @@
+import os
 from fastmcp import FastMCP
 from .tools import WIMCTools
 
@@ -7,12 +8,17 @@ mcp = FastMCP("WIMC")
 # Initialiser les outils
 tools = WIMCTools()
 
+# Auto-login au démarrage si les credentials sont dans l'env
+EMAIL = os.getenv("WIMC_EMAIL")
+PASSWORD = os.getenv("WIMC_PASSWORD")
+
+if EMAIL and PASSWORD:
+    tools.login(EMAIL, PASSWORD)
 
 @mcp.tool()
 def login(email: str, password: str) -> dict:
     """Se connecter à WIMC pour obtenir un token JWT"""
     return tools.login(email, password)
-
 
 @mcp.tool()
 def get_children() -> dict:
