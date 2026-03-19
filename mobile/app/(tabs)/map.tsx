@@ -146,7 +146,7 @@ export default function MapScreen() {
       );
       const points = await res.json();
       const results: { [childId: number]: HistoryPoint[] } = {};
-      results[1] = Array.isArray(points) ? points.slice(0, 500) : [];
+      results[1] = Array.isArray(points) ? points : [];
 
       setHistoryPoints(results);
 
