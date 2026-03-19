@@ -16,6 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.thomasdecourt.wimc-gps-emitter",
       "infoPlist": {
+        "UIBackgroundModes": ["location","fetch"],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
