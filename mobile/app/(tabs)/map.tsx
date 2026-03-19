@@ -30,7 +30,6 @@ export default function MapScreen() {
   const [historyPoints, setHistoryPoints] = useState<{ [childId: number]: HistoryPoint[] }>({});
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // ✅ FIX : state contrôlé pour la région de la carte
   const [mapRegion, setMapRegion] = useState({
     latitude: 44.8566,
     longitude: -0.5522,
@@ -42,12 +41,10 @@ export default function MapScreen() {
   const hasInitializedMap = useRef(false);
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-  // 🔄 Chargement initial
   useEffect(() => {
     loadData();
   }, []);
 
-  // 🔄 Polling GPS toutes les 10 secondes
   useEffect(() => {
     if (children.length === 0) return;
     const interval = setInterval(async () => {
@@ -75,7 +72,6 @@ export default function MapScreen() {
     }
   }, [children]);
 
-  // ✅ FIX : Centrer carte au premier chargement via setMapRegion (pas animateToRegion)
   useEffect(() => {
     if (gpsPositions.length > 0 && !loading && !hasInitializedMap.current) {
       hasInitializedMap.current = true;
@@ -91,7 +87,6 @@ export default function MapScreen() {
     }
   }, [gpsPositions, loading]);
 
-  // 📡 Chargement données
   const loadData = async () => {
     try {
       const { isAuthenticated } = await import('@/services/auth');
@@ -122,7 +117,6 @@ export default function MapScreen() {
     }
   };
 
-  // 📅 Charger les jours disponibles
   const loadAvailableDays = async (childId: number) => {
     try {
       const { getAccessToken } = await import('@/services/auth');
@@ -138,33 +132,30 @@ export default function MapScreen() {
     }
   };
 
-  // 📍 Charger historique d'un jour
+  // 📍 Charger historique d'un jour - child_id hardcodé à 1
   const loadHistoryForDay = async (day: string) => {
     setLoadingHistory(true);
     setSelectedDay(day);
     try {
       const { getAccessToken } = await import('@/services/auth');
       const token = await getAccessToken();
-      const results: { [childId: number]: HistoryPoint[] } = {};
-      await Promise.all(
-        children.map(async (child) => {
-          const res = await fetch(
-            `${API_URL}/api/gps/children/${child.id}/history?day=${day}&interval_seconds=30&snap=false`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          const points = await res.json();
-          results[child.id] = points.slice(0, 200);
-        })
+
+      const res = await fetch(
+        `${API_URL}/api/gps/children/1/history?day=${day}&interval_seconds=30&snap=false`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+      const points = await res.json();
+      const results: { [childId: number]: HistoryPoint[] } = {};
+      results[1] = Array.isArray(points) ? points.slice(0, 500) : [];
+
       setHistoryPoints(results);
 
       // Centrer sur le premier point
-      const firstChild = children[0];
-      const points = results[firstChild?.id];
-      if (points && points.length > 0) {
+      const historyData = results[1];
+      if (historyData && historyData.length > 0) {
         mapRef.current?.animateToRegion({
-          latitude: points[0].latitude,
-          longitude: points[0].longitude,
+          latitude: historyData[0].latitude,
+          longitude: historyData[0].longitude,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }, 1000);
@@ -176,12 +167,11 @@ export default function MapScreen() {
     }
   };
 
-  // 🔴 Retour en live
   const goLive = () => {
     setShowHistory(false);
     setSelectedDay(null);
     setHistoryPoints({});
-    const firstGPS = gpsPositions.find(gps => gps.latitude !== null);
+    const firstGPS = gpsPositions.find(gps => gps.child_id === 1 && gps.latitude !== null);
     if (firstGPS) {
       mapRef.current?.animateToRegion({
         latitude: firstGPS.latitude,
@@ -192,7 +182,6 @@ export default function MapScreen() {
     }
   };
 
-  // 📍 Position GPS actuelle d'un enfant
   const getCurrentGPSPosition = (childId: number) => {
     const pos = gpsPositions.find(gps => gps.child_id === childId && gps.latitude !== null);
     if (!pos) return null;
@@ -272,7 +261,6 @@ export default function MapScreen() {
         </Text>
       </View>
 
-      {/* ✅ FIX : region (contrôlée) + onRegionChangeComplete pour laisser l'user scroller librement */}
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
@@ -360,7 +348,7 @@ export default function MapScreen() {
         <Text style={styles.centerButtonText}>📍</Text>
       </TouchableOpacity>
 
-      {/* Bouton Live (visible seulement en mode historique) */}
+      {/* Bouton Live */}
       {showHistory && (
         <TouchableOpacity style={styles.liveButton} onPress={goLive}>
           <Text style={styles.liveButtonText}>🔴 Live</Text>
